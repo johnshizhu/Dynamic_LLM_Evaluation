@@ -2,35 +2,37 @@ from base_agent import Agent
 
 key = input("Please enter an openAI API key: ")
 
+
+# CREATE PROPOSER AND VERIFIER
 proposer = Agent("generator", "gpt4-1106-preview", key)
 verifier = Agent("verifier", "gpt4-1106-preview", key)
 print("Agent Creation Complete")
 
-cont = True
+# DEFINE CONSTRAINTS
 constraints = f"""
     1. The topic must be related to healthcare
     2. The topic must be related to dermatology
 """
 
+# GENERATE FIRST TOPIC
 initial_prompt = f"""
-    Task: Generate a topic of interest given the following constraints:
+    Constraints:
     {constraints}
+    Task: Propose an topic of discussion within these constraints:
 """
-
 proposal_obj = proposer.query(initial_prompt)
-proposal = proposal_obj.choices[0].message.content
+target_proposal = proposal_obj.choices[0].message.content
 print("PROPOSAL--------------------")
-print(proposal)
+print(target_proposal)
 print("")
 
+# VERIFY FIRST TOPIC
 verification_prompt = f"""
-    Task: Verify that the a previous proposal is valid given these constraints:
+    Constraints:
     {constraints}
-
-    Previous Proposal:
-    {proposal}
-
-    Rate the proposal on a scale of 1-10
+    Target Proposal:
+    {target_proposal}
+    Task: Verify that the target proposal 1. Falls within the defined constraints, give a score from 0 to 10 evaluating the proposal. 
 """
 verification_obj = verifier.query(verification_prompt)
 verification = verification_obj.choices[0].message.content
@@ -39,36 +41,35 @@ print("VERIFICATION --------------------------")
 print(verification)
 print("")
 
-iterations = 8
+# FIRST TOPIC BECOMES PREVIOUS TOPIC
+previous_proposal = target_proposal
+iterations = 4
 
+# REPEAT FOR SPECIFIED ITERATION
 for i in range(iterations):
+    # GENERATE NEW TOPIC BASED ON PREVIOUS TOPIC
     proposal_prompt = f"""
-        Task: Generate a topic of interest given the following constraints:
+        Previous proposal:
+        {previous_proposal}
+        Constraints:
         {constraints}
-        This topic should following logically the previous topic which is this:
-        {proposal}
-        The new topic should be a deeper scope building on the previous topic. 
-        Only output the new topic.
+        Task: Propose a new topic of discussion that sequentially follows a previous topic and falls within constraints. The new topic should aim to more deeply explore the topic space of the previous topic. 
     """
-    prev_proposal = proposal
-    proposal_obj = proposer.query(initial_prompt)
+    proposal_obj = proposer.query(proposal_prompt)
     proposal = proposal_obj.choices[0].message.content
     print("PROPOSAL--------------------")
     print(proposal)
     print("")
 
+    # VERIFY NEW TOPIC BASED ON PERVIOUS TOPIC
     verification_prompt = f"""
-        Task: Verify that the a target topic proposal is valid given these constraints:
+        Previous proposal:
+        {previous_proposal}
+        Constraints:
         {constraints}
-        Target proposal shoud logically follow from this previous proposal:
-        {prev_proposal}
-        
-        Target Proposal:
-        {proposal}
-
-        Rate the proposal on a scale of 1-10 based on how well it follows the constraint,
-        how well it logically follows the previous proposal and on if it does a good job achieving
-        a deep scope than the previous proposal
+        Target Proposal
+        {target_proposal}
+        Task: Verify that the target proposal 1. Falls within the defined constraints, 2. Builds on top of the previous proposal, 3. More deeply explores the topic space of the previous proposal. Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
     """
     verification_obj = verifier.query(verification_prompt)
     verification = verification_obj.choices[0].message.content
@@ -76,3 +77,5 @@ for i in range(iterations):
     print("VERIFICATION --------------------------")
     print(verification)
     print("")
+
+    previous_proposal = target_proposal
