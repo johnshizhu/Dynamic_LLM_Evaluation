@@ -18,7 +18,7 @@ constraints = f"""
 initial_prompt = f"""
     Constraints:
     {constraints}
-    Task: Propose an topic of discussion within these constraints:
+    Task: Propose a general topic of discussion within these constraints
 """
 proposal_obj = proposer.query(initial_prompt)
 target_proposal = proposal_obj.choices[0].message.content
@@ -32,7 +32,7 @@ verification_prompt = f"""
     {constraints}
     Target Proposal:
     {target_proposal}
-    Task: Verify that the target proposal 1. Falls within the defined constraints, give a score from 0 to 10 evaluating the proposal. 
+    Task: Verify that the target proposal 1. Falls within the defined constraints, giving a score from 0 to 10 evaluating the proposal. 
 """
 verification_obj = verifier.query(verification_prompt)
 verification = verification_obj.choices[0].message.content
@@ -53,7 +53,10 @@ for i in range(iterations):
         {previous_proposal}
         Constraints:
         {constraints}
-        Task: Propose a new topic of discussion that sequentially follows a previous topic and falls within constraints. The new topic should aim to more deeply explore the topic space of the previous topic. 
+        Task: Propose a new topic of discussion that sequentially follows a previous topic and falls within constraints. The new topic should more deeply and specifically explore the space of the previous topic. 
+        Your output should be in the format:
+        Previous proposal:...
+        New proposal:... 
     """
     proposal_obj = proposer.query(proposal_prompt)
     proposal = proposal_obj.choices[0].message.content
@@ -70,6 +73,9 @@ for i in range(iterations):
         Target Proposal
         {target_proposal}
         Task: Verify that the target proposal 1. Falls within the defined constraints, 2. Builds on top of the previous proposal, 3. More deeply explores the topic space of the previous proposal. Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
+        Your output should be in the format:
+        Verification Rational: …
+        Final Rating: **number here**
     """
     verification_obj = verifier.query(verification_prompt)
     verification = verification_obj.choices[0].message.content

@@ -6,13 +6,13 @@ class Agent():
         self.model_type = model_type
         self.key = key
 
-        possible_models = [
+        models = [
             "gpt-3.5-turbo-16k",
             "gpt-3.5-turbo",
             "gpt4-1106-preview"
         ]
 
-        if self.model_type not in possible_models:
+        if self.model_type not in models:
             raise Exception("Model Input not valid")
 
     def modelType(self):
