@@ -1,12 +1,7 @@
-from base_agent import Agent
+from base_agent import Agent, Proposer, Verifier
+import re
 
 key = input("Please enter an openAI API key: ")
-
-
-# CREATE PROPOSER AND VERIFIER
-proposer = Agent("generator", "gpt4-1106-preview", key)
-verifier = Agent("verifier", "gpt4-1106-preview", key)
-print("Agent Creation Complete")
 
 # DEFINE CONSTRAINTS
 constraints = f"""
@@ -14,74 +9,37 @@ constraints = f"""
     2. The topic must be related to dermatology
 """
 
-# GENERATE FIRST TOPIC
-initial_prompt = f"""
-    Constraints:
-    {constraints}
-    Task: Propose a general topic of discussion within these constraints
-"""
-proposal_obj = proposer.query(initial_prompt)
-target_proposal = proposal_obj.choices[0].message.content
-print("PROPOSAL--------------------")
-print(target_proposal)
-print("")
+# CREATE PROPOSER AND VERIFIER
+proposer = Proposer("generator", "gpt4-1106-preview", key, constraints)
+verifier = Verifier("verifier", "gpt4-1106-preview", key, constraints)
+is_first = True
 
-# VERIFY FIRST TOPIC
-verification_prompt = f"""
-    Constraints:
-    {constraints}
-    Target Proposal:
-    {target_proposal}
-    Task: Verify that the target proposal 1. Falls within the defined constraints, giving a score from 0 to 10 evaluating the proposal. 
-"""
-verification_obj = verifier.query(verification_prompt)
-verification = verification_obj.choices[0].message.content
-print("")
-print("VERIFICATION --------------------------")
-print(verification)
-print("")
+prompt_list = []
+verify_list = []
 
-# FIRST TOPIC BECOMES PREVIOUS TOPIC
-previous_proposal = target_proposal
-iterations = 4
+# GENERATE INITIAL PROMPT AND VALIDATION
+prompt = proposer.generate_prompt(None, is_first=True).choices[0].message.content
+verify = verifier.verify_prompt(None, prompt, is_first=True).choices[0].message.content
+prompt_list.append(prompt)
+verify_list.append(verify)
 
-# REPEAT FOR SPECIFIED ITERATION
-for i in range(iterations):
-    # GENERATE NEW TOPIC BASED ON PREVIOUS TOPIC
-    proposal_prompt = f"""
-        Previous proposal:
-        {previous_proposal}
-        Constraints:
-        {constraints}
-        Task: Propose a new topic of discussion that sequentially follows a previous topic and falls within constraints. The new topic should more deeply and specifically explore the space of the previous topic. 
-        Your output should be in the format:
-        Previous proposal:...
-        New proposal:... 
-    """
-    proposal_obj = proposer.query(proposal_prompt)
-    proposal = proposal_obj.choices[0].message.content
-    print("PROPOSAL--------------------")
-    print(proposal)
+for i in range(3):
+    prev_prompt = prompt
+    prompt = proposer.generate_prompt(prev_prompt, is_first=False).choices[0].message.content
+    verify = verifier.verify_prompt(prev_prompt, prompt, is_first=False).choices[0].message.content
+    print(verify)
+    verify_score = int(re.search(r'\*\*(\d+)\*\*$', verify).group(1))
+    verify_rational = re.search(r'\#\#(\d+)\#\#$', verify).group(1)
+    print(verify_score)
+    print(f'RATIONAL IS: {verify_rational}')
+
+    prompt_list.append(prompt)
+    verify_list.append(verify)
+
+for i in range(len(prompt_list)):
+    print(f'Prompt {i}')
+    print(prompt_list[i])
     print("")
-
-    # VERIFY NEW TOPIC BASED ON PERVIOUS TOPIC
-    verification_prompt = f"""
-        Previous proposal:
-        {previous_proposal}
-        Constraints:
-        {constraints}
-        Target Proposal
-        {target_proposal}
-        Task: Verify that the target proposal 1. Falls within the defined constraints, 2. Builds on top of the previous proposal, 3. More deeply explores the topic space of the previous proposal. Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
-        Your output should be in the format:
-        Verification Rational: …
-        Final Rating: **number here**
-    """
-    verification_obj = verifier.query(verification_prompt)
-    verification = verification_obj.choices[0].message.content
+    print(f'Verificiation {i}')
+    print(verify_list[i])
     print("")
-    print("VERIFICATION --------------------------")
-    print(verification)
-    print("")
-
-    previous_proposal = target_proposal

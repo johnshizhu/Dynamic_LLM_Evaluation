@@ -1,5 +1,15 @@
 from litellm import completion
 
+def gpt_query(message, key, model_type):
+    response = completion(
+        api_key = key,
+        base_url = "https://drchat.xyz",
+        model = model_type,
+        custom_llm_provider="openai",
+        messages = [{ "content": message,"role": "user"}]
+    )
+    return response
+
 class Agent():
     def __init__(self, name, model_type, key):
         self.name = name
@@ -14,16 +24,80 @@ class Agent():
 
         if self.model_type not in models:
             raise Exception("Model Input not valid")
+    
+    def query(self, message):
+        return gpt_query(message, self.key, self.model_type)
+    
+class Proposer(Agent):
+    def __init__(self, name, model_type, key, constraints):
+        super().__init__(name, model_type, key)
+        self.constraints = constraints
+    
+    def generate_prompt(self, previous_proposal, is_first=False):
+        if is_first:
+            message = f"""
+            Constraints:
+            {self.constraints}
+            Task: Propose a general topic of discussion within these constraints
+            """
+            return gpt_query(message, self.key, self.model_type)
+        else:
+            message = f"""
+                Previous proposal:
+                {previous_proposal}
+                Task: Propose a new topic of discussion that sequentially follows a previous topic. The new topic should more deeply and specifically explore the space of the previous topic. 
+                Your output should be in the format:
+                Previous proposal:...
+                New proposal:... 
+            """
+            return gpt_query(message, self.key, self.model_type)
+        
+    def regenerate_prompt(self, previous_proposal, previous_attempt, previous_rational):
+        message = f"""
+            Previous proposal:
+            {previous_proposal}
+            Previous Attempt:
+            {previous_attempt}
+            The Previous attempt did not perform the task well according to this rational:
+            {previous_rational}
+            Propose a new topic of discussion that sequentially follows a previous topic. The new topic should more deeply and specifically explore the space of the previous topic. 
+            Your output should be in the format:
+            Previous proposal:...
+            New proposal:... 
+        """
+        return gpt_query(message, self.key, self.model_type)
+
+class Verifier(Agent):
+    def __init__(self, name, model_type, key, constraints):
+        super().__init__(name, model_type, key)
+        self.constraints = constraints
 
     def modelType(self):
         return self.model_type
     
-    def query(self, message):
-        response = completion(
-            api_key = self.key,
-            base_url = "https://drchat.xyz",
-            model = self.model_type,
-            custom_llm_provider="openai",
-            messages = [{ "content": message,"role": "user"}]
-        )
-        return response
+    def verify_prompt(self, previous_proposal, target_proposal, is_first=False):
+        if is_first:
+            message = f"""
+                Constraints:
+                {self.constraints}
+                Target Proposal:
+                {target_proposal}
+                Task: Verify that the target proposal 1. Falls within the defined constraints, giving a score from 0 to 10 evaluating the proposal.
+                Your output should be in the format:
+                Verification Rational: ## rational here ##
+                Final Rating: **number here**  
+            """
+            return gpt_query(message, self.key, self.model_type)
+
+        else:
+            message = f"""
+                Previous proposal:
+                {previous_proposal}
+                Target Proposal
+                {target_proposal}
+                Task: Verify that the target proposal 1. Builds on top of the previous proposal, 2. More deeply explores the topic space of the previous proposal. Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
+                Your output should be in the format:
+                Verification Rational: ## rational here ##
+                Final Rating: **number here**
+            """
+            return gpt_query(message, self.key, self.model_type)
