@@ -8,7 +8,7 @@ def gpt_query(message, key, model_type):
         custom_llm_provider="openai",
         messages = [{ "content": message,"role": "user"}]
     )
-    return response
+    return response.choices[0].message.content
 
 class Agent():
     def __init__(self, name, model_type, key):
@@ -84,7 +84,7 @@ class Verifier(Agent):
                 {target_proposal}
                 Task: Verify that the target proposal 1. Falls within the defined constraints, giving a score from 0 to 10 evaluating the proposal.
                 Your output should be in the format:
-                Verification Rational: ## rational here ##
+                Verification Rational: rational here
                 Final Rating: **number here**  
             """
             return gpt_query(message, self.key, self.model_type)
@@ -97,7 +97,7 @@ class Verifier(Agent):
                 {target_proposal}
                 Task: Verify that the target proposal 1. Builds on top of the previous proposal, 2. More deeply explores the topic space of the previous proposal. Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
                 Your output should be in the format:
-                Verification Rational: ## rational here ##
+                Verification Rational: rational here
                 Final Rating: **number here**
             """
             return gpt_query(message, self.key, self.model_type)
