@@ -33,7 +33,7 @@ class Proposer(Agent):
         super().__init__(name, model_type, key)
         self.constraints = constraints
     
-    def generate_prompt(self, previous_proposal, is_first=False):
+    def generate_prompt(self, previous_proposal, memory, is_first=False):
         if is_first:
             message = f"""
             Constraints:
@@ -43,27 +43,37 @@ class Proposer(Agent):
             return gpt_query(message, self.key, self.model_type)
         else:
             message = f"""
+                Constraints:
+                {self.constraints}
                 Previous proposal:
                 {previous_proposal}
+                ALL previous proposals:
+                {memory}
                 Task: Propose a new topic of discussion that sequentially follows a previous topic. The new topic should more deeply and specifically explore the space of the previous topic. 
-                Your output should be in the format:
-                Previous proposal:...
-                New proposal:... 
+                Desired output format:
+                Previous proposal: <Previous proposal goes here>
+                Raional for Proposal: <Rational for Proposal goes here>
+                New proposal: <New Proposal goes here>
             """
             return gpt_query(message, self.key, self.model_type)
         
-    def regenerate_prompt(self, previous_proposal, previous_attempt, previous_rational):
+    def regenerate_prompt(self, previous_proposal, memory, previous_attempt, previous_rational):
         message = f"""
+            Constraints:
+            {self.constraints}
             Previous proposal:
             {previous_proposal}
+            All previous proposals:
+            {memory}
             Previous Attempt:
             {previous_attempt}
             The Previous attempt did not perform the task well according to this rational:
             {previous_rational}
             Propose a new topic of discussion that sequentially follows a previous topic. The new topic should more deeply and specifically explore the space of the previous topic. 
-            Your output should be in the format:
-            Previous proposal:...
-            New proposal:... 
+            Desired output format:
+            Previous proposal: <Previous proposal goes here>
+            Rational for Proposal: <Rational for Proposal goes here>
+            New proposal: <New Proposal goes here>
         """
         return gpt_query(message, self.key, self.model_type)
 
@@ -75,7 +85,7 @@ class Verifier(Agent):
     def modelType(self):
         return self.model_type
     
-    def verify_prompt(self, previous_proposal, target_proposal, is_first=False):
+    def verify_prompt(self, previous_proposal, memory, target_proposal, is_first=False):
         if is_first:
             message = f"""
                 Constraints:
@@ -83,21 +93,29 @@ class Verifier(Agent):
                 Target Proposal:
                 {target_proposal}
                 Task: Verify that the target proposal 1. Falls within the defined constraints, giving a score from 0 to 10 evaluating the proposal.
-                Your output should be in the format:
-                Verification Rational: rational here
+                Desired output format:
+                Verification Rational: <Verification Rational goes here>
                 Final Rating: **number here**  
             """
             return gpt_query(message, self.key, self.model_type)
 
         else:
             message = f"""
+                Constraints:
+                {self.constraints}
                 Previous proposal:
                 {previous_proposal}
+                All previous proposals:
+                {memory}
                 Target Proposal
                 {target_proposal}
-                Task: Verify that the target proposal 1. Builds on top of the previous proposal, 2. More deeply explores the topic space of the previous proposal. Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
-                Your output should be in the format:
-                Verification Rational: rational here
+                Task: Verify that the target proposal:
+                    1. Logically Builds on top of the previous proposal and all previous proposals, 
+                    2. More deeply explores the topic space of the previous proposal,
+                    3. More specifically explore the topic space of the previous proposal.
+                Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
+                Desired Output Format:
+                Verification Rational: <Verification Rational goes here>
                 Final Rating: **number here**
             """
             return gpt_query(message, self.key, self.model_type)
