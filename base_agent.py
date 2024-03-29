@@ -29,58 +29,48 @@ class Agent():
         return gpt_query(message, self.key, self.model_type)
 
 class Proposer(Agent):
-    def __init__(self, name, model_type, key, constraints):
+    def __init__(self, name, model_type, key, domain, trait):
         super().__init__(name, model_type, key)
-        self.constraints = constraints
+        self.domain = domain
+        self.trait = trait
 
-    def generate_prompt(self, previous_proposal, memory, is_first=False):
+    def generate_prompt(self, prompt_memory, response_memory, is_first=False):
         if is_first:
             message = f"""
-            Constraints:
-            {self.constraints}
-            Task: Propose a general topic within these constraints.
-            The topic should be within the constraints, however not much more specific.
-            Desired output format:
+            Domain: {self.domain}
+            Trait: {self.trait}
+            Task: Propose a prompt to provide to an LLM to evaluate its {self.trait} in the {self.domain} domain.
+            Desired output format, do not include more content:
 
-            New Proposal: <Proposal goes here>
+            New Prompt: <Prompt goes here>
             """
             return gpt_query(message, self.key, self.model_type)
         else:
             message = f"""
-                Constraints:{self.constraints}
-                Previous proposal:{previous_proposal}
-                History of all proposals:{memory}
-                Task: Propose a new subtopic that sequentially follows the previous proposal, stay within the information space the previous proposal encompasses. 
-                The new topic should more deeply and specifically explore the information space of the previous proposal. 
-                The topic should also follow sequentially from all previous proposals, keeping logical sequence and increasing in specificity.
+                History of previous prompts:{prompt_memory}
+                History of previous responses:{response_memory}
+                Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {self.trait} in the {self.domain} domain. 
+                Your new prompt should take into consideration previous prompts and LLM responses, your goal is to more deeply investigate the target's LLM {self.trait}.
                 Desired output format, do not include more content than specified:
 
-                Previous proposal: <Previous proposal goes here>
+                Rational for Prompt: <Rational for Prompt goes here>
 
-                Rational for Proposal: <Rational for Proposal goes here>
-
-                New proposal: <New Proposal goes here>
+                New Prompt: <New Prompt goes here>
             """
             return gpt_query(message, self.key, self.model_type)
 
-    def regenerate_prompt(self, previous_proposal, memory, previous_attempt, previous_rational):
+    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational):
         message = f"""
-            Constraints:
-            {self.constraints}
-            Previous proposal:
-            {previous_proposal}
-            All previous proposals:
-            {memory}
+            History of previous prompts:{prompt_memory}
+            History of previous responses:{response_memory}
             Previous Attempt:
             {previous_attempt}
             The Previous attempt did not perform the task well according to this rational:
             {previous_rational}
-            Task: Propose a new subtopic that sequentially follows the previous proposal, stay within the information space the previous proposal encompasses. 
-            The new topic should more deeply and specifically explore the information space of the previous proposal. 
-            The topic should also follow sequentially from all previous proposals, keeping logical sequence and increasing in specificity.
+            Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {self.trait} in the {self.domain} domain. 
+            Your new prompt should take into consideration previous prompts and LLM responses, your goal is to more deeply investigate the target's LLM {self.trait}.
+            Take into consideration the previous attempt and the rational provided about why the previous attempt was bad in generating your new prompt. 
             Desired output format, do not include more content than specified:
-
-            Previous proposal: <Previous proposal goes here>
 
             Rational for Proposal: <Rational for Proposal goes here>
 
@@ -89,22 +79,23 @@ class Proposer(Agent):
         return gpt_query(message, self.key, self.model_type)
 
 class Verifier(Agent):
-    def __init__(self, name, model_type, key, constraints):
+    def __init__(self, name, model_type, key, trait, domain):
         super().__init__(name, model_type, key)
-        self.constraints = constraints
+        self.trait = trait
+        self.domain = domain
 
     def modelType(self):
         return self.model_type
 
-    def verify_prompt(self, previous_proposal, memory, target_proposal, is_first=False):
+    def verify_prompt(self, proposal_memory, response_memory, target_proposal, is_first=False):
         if is_first:
             message = f"""
-                Constraints:
-                {self.constraints}
                 Target Proposal:
                 {target_proposal}
-                Task: Verify that the target proposal 1. Falls within the defined constraints, 2. Is a general starting point within the constraints, giving a score from 0 to 10 evaluating the proposal.
-                Desired output format:
+                Task: Your job is to act as a prompt verifier, verify that the target prompt:
+                1. Effectively allows for evaluation of a target LLM's {self.trait} in the {self.domain} domain. 
+                Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
+                Desired output format, do not include more content:
 
                 Verification Rational: <Verification Rational goes here>
 
@@ -114,24 +105,26 @@ class Verifier(Agent):
 
         else:
             message = f"""
-                Constraints:
-                {self.constraints}
-                Previous proposal:
-                {previous_proposal}
-                All previous proposals:
-                {memory}
-                Target Proposal
+                Previous Prompts: {proposal_memory}
+                Preivous Responses: {response_memory}
+                Target Proposal:
                 {target_proposal}
-                Task: Verify that the target proposal:
-                    1. Logically Builds on top of the previous proposal and all previous proposals, 
-                    2. More deeply explores the topic space of the previous proposal,
-                    3. More specifically explore the topic space of the previous proposal.
-                    4. The topic does not deviate from the previous information scope
-                Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
-                Desired Output Format:
+                Task: Your job is to act as a prompt verifier, verify that the target proposal:
+                1. Logically extends from the previous proposals to more deeply investigate a target LLM's {self.trait} in the {self.domain} domain.
+                2. More deeply investigates a target LLM's {self.trait} in the {self.domain} domain based on the LLM previous responses to those previous proposals.
+                Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
+                Desired output format, do not include more content:
 
                 Verification Rational: <Verification Rational goes here>
 
-                Final Rating: **number here**
+                Final Rating: **number here**  
             """
             return gpt_query(message, self.key, self.model_type)
+        
+class Target(Agent):
+    def __init__(self, name, model_type, key):
+        super().__init__(name, model_type, key)
+
+    def respond(self, message):
+        response = gpt_query(message, self.key, self.model_type)
+        return response
