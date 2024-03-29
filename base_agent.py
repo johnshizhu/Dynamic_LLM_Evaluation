@@ -24,39 +24,45 @@ class Agent():
 
         if self.model_type not in models:
             raise Exception("Model Input not valid")
-    
+
     def query(self, message):
         return gpt_query(message, self.key, self.model_type)
-    
+
 class Proposer(Agent):
     def __init__(self, name, model_type, key, constraints):
         super().__init__(name, model_type, key)
         self.constraints = constraints
-    
+
     def generate_prompt(self, previous_proposal, memory, is_first=False):
         if is_first:
             message = f"""
             Constraints:
             {self.constraints}
-            Task: Propose a general topic of discussion within these constraints
+            Task: Propose a general topic within these constraints.
+            The topic should be within the constraints, however not much more specific.
+            Desired output format:
+
+            New Proposal: <Proposal goes here>
             """
             return gpt_query(message, self.key, self.model_type)
         else:
             message = f"""
-                Constraints:
-                {self.constraints}
-                Previous proposal:
-                {previous_proposal}
-                ALL previous proposals:
-                {memory}
-                Task: Propose a new topic of discussion that sequentially follows a previous topic. The new topic should more deeply and specifically explore the space of the previous topic. 
-                Desired output format:
+                Constraints:{self.constraints}
+                Previous proposal:{previous_proposal}
+                History of all proposals:{memory}
+                Task: Propose a new subtopic that sequentially follows the previous proposal, stay within the information space the previous proposal encompasses. 
+                The new topic should more deeply and specifically explore the information space of the previous proposal. 
+                The topic should also follow sequentially from all previous proposals, keeping logical sequence and increasing in specificity.
+                Desired output format, do not include more content than specified:
+
                 Previous proposal: <Previous proposal goes here>
-                Raional for Proposal: <Rational for Proposal goes here>
+
+                Rational for Proposal: <Rational for Proposal goes here>
+
                 New proposal: <New Proposal goes here>
             """
             return gpt_query(message, self.key, self.model_type)
-        
+
     def regenerate_prompt(self, previous_proposal, memory, previous_attempt, previous_rational):
         message = f"""
             Constraints:
@@ -69,10 +75,15 @@ class Proposer(Agent):
             {previous_attempt}
             The Previous attempt did not perform the task well according to this rational:
             {previous_rational}
-            Propose a new topic of discussion that sequentially follows a previous topic. The new topic should more deeply and specifically explore the space of the previous topic. 
-            Desired output format:
+            Task: Propose a new subtopic that sequentially follows the previous proposal, stay within the information space the previous proposal encompasses. 
+            The new topic should more deeply and specifically explore the information space of the previous proposal. 
+            The topic should also follow sequentially from all previous proposals, keeping logical sequence and increasing in specificity.
+            Desired output format, do not include more content than specified:
+
             Previous proposal: <Previous proposal goes here>
+
             Rational for Proposal: <Rational for Proposal goes here>
+
             New proposal: <New Proposal goes here>
         """
         return gpt_query(message, self.key, self.model_type)
@@ -84,7 +95,7 @@ class Verifier(Agent):
 
     def modelType(self):
         return self.model_type
-    
+
     def verify_prompt(self, previous_proposal, memory, target_proposal, is_first=False):
         if is_first:
             message = f"""
@@ -92,9 +103,11 @@ class Verifier(Agent):
                 {self.constraints}
                 Target Proposal:
                 {target_proposal}
-                Task: Verify that the target proposal 1. Falls within the defined constraints, giving a score from 0 to 10 evaluating the proposal.
+                Task: Verify that the target proposal 1. Falls within the defined constraints, 2. Is a general starting point within the constraints, giving a score from 0 to 10 evaluating the proposal.
                 Desired output format:
+
                 Verification Rational: <Verification Rational goes here>
+
                 Final Rating: **number here**  
             """
             return gpt_query(message, self.key, self.model_type)
@@ -113,9 +126,12 @@ class Verifier(Agent):
                     1. Logically Builds on top of the previous proposal and all previous proposals, 
                     2. More deeply explores the topic space of the previous proposal,
                     3. More specifically explore the topic space of the previous proposal.
+                    4. The topic does not deviate from the previous information scope
                 Give a rating between 0 and 10 evaluating the proposal at the end of your response. 
                 Desired Output Format:
+
                 Verification Rational: <Verification Rational goes here>
+
                 Final Rating: **number here**
             """
             return gpt_query(message, self.key, self.model_type)

@@ -32,7 +32,7 @@ class TopicGenerator():
 
             # If the verify score is too low, regenerate, max 3 times
             if verify_score < 6:
-                print(f'Bad Topic Generated with a score of {verify_score}, regenerating')
+                print(f'Bad Topic Generated with a score of {verify_score} on iteration {i}, regenerating')
                 for i in range(3):
                     regen_counter += 1
                     prompt = self.proposer.regenerate_prompt(prev_prompt, str(memory), prompt, verify)
@@ -50,7 +50,7 @@ class TopicGenerator():
             if start_index != -1:  # Check if the substring was found
                 memory.append(prompt[start_index+len("New proposal:"):].strip())  # Remove any leading whitespace
             else:
+                print(prompt)
                 raise Exception("Error in output format")
 
-
-        return prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter
+        return prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, memory

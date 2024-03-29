@@ -5,17 +5,17 @@ key = input("Please enter an openAI API key: ")
 
 # DEFINE CONSTRAINTS
 constraints = f"""
-    1. Deep Learning
+    1. Biology Research
+    2. Cancer Research
 """
 
 print(f'Constraints are: {constraints}')
-print(f'')
 
 # CREATE PROPOSER AND VERIFIER
 proposer = Proposer("generator", "gpt4-1106-preview", key, constraints)
 verifier = Verifier("verifier", "gpt4-1106-preview", key, constraints)
 generator = TopicGenerator(constraints, proposer, verifier)
-prompt_list, verify_list, bad_prompts, bad_verify, regen_counter = generator.generate(6)
+prompt_list, verify_list, bad_prompts, bad_verify, regen_counter, memory = generator.generate(10)
 
 for i in range(len(prompt_list)):
     print(f'Prompt {i}')
@@ -32,4 +32,9 @@ if bad_prompts:
         print(f'Verification{i}')
         print(bad_verify[i])
 
+print(f'Memory is: ')
+for mem in memory:
+    print(mem)
+    print(f'')
+print(f'')
 print(f'Regen Counter is: {regen_counter}')
