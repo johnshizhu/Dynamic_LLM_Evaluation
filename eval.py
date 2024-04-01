@@ -8,7 +8,7 @@ class EvaluateLLM():
         self.verifier = verifier
         self.target = target
 
-    def generate(self, iterations):
+    def evaluate(self, iterations):
         prompt_list = []
         verify_list = []
         bad_prompt_list = []
@@ -32,9 +32,8 @@ class EvaluateLLM():
 
         for i in range(iterations):
             # GENERATE PROMPT AND VERIFICATION
-            prev_prompt = prompt
-            prompt = self.proposer.generate_prompt(prev_prompt, str(prompt_memory), str(response_memory), is_first=False)
-            verify = self.verifier.verify_prompt(prev_prompt, str(prompt_memory), str(response_memory), prompt, is_first=False)
+            prompt = self.proposer.generate_prompt(str(prompt_memory), str(response_memory), is_first=False)
+            verify = self.verifier.verify_prompt(str(prompt_memory), str(response_memory), prompt, is_first=False)
             verify_score = int(re.findall(r'\d+', verify)[-1])
 
             # If the verify score is too low, regenerate, max 3 times
@@ -42,8 +41,8 @@ class EvaluateLLM():
                 print(f'Bad Topic Generated with a score of {verify_score} on iteration {i}, regenerating')
                 for i in range(3):
                     regen_counter += 1
-                    prompt = self.proposer.regenerate_prompt(prev_prompt, str(prompt_memory), str(response_memory), prompt, verify)
-                    verify = self.verifier.verify_prompt(prev_prompt, str(prompt_memory), str(response_memory), prompt, is_first=False)
+                    prompt = self.proposer.regenerate_prompt(str(prompt_memory), str(response_memory), prompt, verify)
+                    verify = self.verifier.verify_prompt(str(prompt_memory), str(response_memory), prompt, is_first=False)
                     verify_score = int(re.findall(r'\d+', verify)[-1])
                     if verify_score > 5:
                         break
@@ -57,12 +56,12 @@ class EvaluateLLM():
             target_response = self.target.respond(prompt)
             response_memory.append(target_response)
 
-            start_index = prompt.find("New proposal:")
-            # Extract everything after "New proposal:"
+            start_index = prompt.find("New Prompt:")
+            # Extract everything after "New Prompt:"
             if start_index != -1:  # Check if the substring was found
-                prompt_memory.append(prompt[start_index+len("New proposal:"):].strip())  # Remove any leading whitespace
+                prompt_memory.append(prompt[start_index+len("New Prompt:"):].strip())  # Remove any leading whitespace
             else:
                 print(prompt)
-                raise Exception("Error in output format")
+                raise Exception("Error in output format, 'New Prompt' not found")
 
         return prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory
