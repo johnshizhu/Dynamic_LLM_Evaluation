@@ -1,12 +1,14 @@
 import re
 
 class EvaluateLLM():
-    def __init__(self, trait, domain, proposer, verifier, target):
+    def __init__(self, trait, trait_definition, domain, proposer, verifier, target, evaluator):
         self.trait = trait
+        self.trait_definition = trait_definition
         self.domain = domain
         self.proposer = proposer
         self.verifier = verifier
         self.target = target
+        self.evaluator = evaluator
 
     def evaluate(self, iterations):
         prompt_list = []
@@ -17,40 +19,31 @@ class EvaluateLLM():
         prompt_memory = []
         response_memory = []
 
-        # GENERATE INITIAL PROMPT AND VALIDATION
-        prompt = self.proposer.generate_prompt(None, None, is_first=True)
-        verify = self.verifier.verify_prompt(None, None, prompt, is_first=True)
-        prompt_list.append(prompt)
-        verify_list.append(verify)
-        prompt_memory.append(prompt.split('\n', 1)[0])
-
-        # RECIEVE INITIAL RESPONSE
-        target_response = self.target.respond(prompt)
-        response_memory.append(target_response)
-
         regen_counter = 0
-
+        is_first = True
         for i in range(iterations):
             # GENERATE PROMPT AND VERIFICATION
-            prompt = self.proposer.generate_prompt(str(prompt_memory), str(response_memory), is_first=False)
-            verify = self.verifier.verify_prompt(str(prompt_memory), str(response_memory), prompt, is_first=False)
+            prompt = self.proposer.generate_prompt(str(prompt_memory), str(response_memory), self.domain, self.trait, self.trait_definition, is_first)
+            verify = self.verifier.verify_prompt(str(prompt_memory), str(response_memory), prompt, self.domain, self.trait, self.trait_definition, is_first)
             verify_score = int(re.findall(r'\d+', verify)[-1])
 
             # If the verify score is too low, regenerate, max 3 times
-            if verify_score < 6:
+            if verify_score < 8:
                 print(f'Bad Topic Generated with a score of {verify_score} on iteration {i}, regenerating')
                 for i in range(3):
                     regen_counter += 1
-                    prompt = self.proposer.regenerate_prompt(str(prompt_memory), str(response_memory), prompt, verify)
-                    verify = self.verifier.verify_prompt(str(prompt_memory), str(response_memory), prompt, is_first=False)
+                    prompt = self.proposer.regenerate_prompt(str(prompt_memory), str(response_memory), prompt, verify, self.domain, self.trait, self.trait_definition)
+                    verify = self.verifier.verify_prompt(str(prompt_memory), str(response_memory), prompt, self.domain, self.trait, self.trait_definition, is_first)
                     verify_score = int(re.findall(r'\d+', verify)[-1])
-                    if verify_score > 5:
+                    if verify_score > 6:
                         break
                     bad_prompt_list.append(prompt)
                     bad_verification_list.append(verify)
 
             prompt_list.append(prompt)
             verify_list.append(verify)
+
+            is_first = False
 
             # RECIEVE TARGET RESPONSE
             target_response = self.target.respond(prompt)
@@ -64,4 +57,6 @@ class EvaluateLLM():
                 print(prompt)
                 raise Exception("Error in output format, 'New Prompt' not found")
 
-        return prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory
+        evaluation = self.evaluator.evaluate(prompt_memory, response_memory, self.domain, self.trait, self.trait_definition)
+
+        return prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory, evaluation
