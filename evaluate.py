@@ -41,6 +41,7 @@ print(f'Prompt Memory is:')
 
 for i in prompt_memory:
     print(f'prompt memroy: {i}')
+    print(f'')
 
 print(f'Verify List is: {verify_list}')
 
