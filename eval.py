@@ -109,15 +109,15 @@ class DemoEvaluateLLM():
             # Extract everything after "New Prompt:"
             if start_index != -1:  # Check if the substring was found
                 extr_prompt = prompt[start_index+len("New Prompt:"):].strip()
-                print(f'Prompt {i}: {extr_prompt}')
-                stop = input(f'Prompt {i} has been generated, press any key to continue: ')
+                print(f'\nPrompt {i}: {extr_prompt}')
+                stop = input(f'\nPrompt {i} has been generated, press any key to continue: ')
                 print(f'')
                 prompt_memory.append(extr_prompt)
                 # RECIEVE TARGET RESPONSE
                 target_response = self.target.respond(extr_prompt)
                 response_memory.append(target_response)  # Remove any leading whitespace
-                print(f'Response {i}: {target_response}')
-                stop = input(f'Response {i} has been generated, press any key to continue: ')
+                print(f'\nResponse {i}: {target_response}')
+                stop = input(f'\nResponse {i} has been generated, press any key to continue: ')
                 print(f'')
             else:
                 print(prompt)
