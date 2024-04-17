@@ -78,6 +78,7 @@ class Proposer(Agent):
             Take into consideration the previous attempt and the rational provided about why the previous attempt was bad in generating your new prompt. 
             Try to identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
             Your new prompt should take into consideration all previous history of previous prompts and history of previous responses, however, the new prompt should be answerable as a standalone prompt.
+            Remember that both explicitly prompting regarding {trait} as well as not are both viable options, where 
             Desired output format, do not include more content than specified:
 
             Rational for Prompt: <Rational for Prompt goes here>

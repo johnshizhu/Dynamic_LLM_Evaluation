@@ -36,14 +36,28 @@ def preprocess_text(text):
 
     return cleaned_tokens
 
-def coherence(documents):
+def coherence(documents, num_topics, passes, iterations, random_state=42):
     '''
-        Calcualtes coherence score from:
-        - (List) documents, list of list of tokens, each list is a response / prompt
+        Calcualtes coherence score using Latent Dirichlet Allocation from:
+        - (List) documents, list of lists of tokens, each list is a response / prompt
+        - (int) num_topics, defines the number of distinct topics that the LDA model should identify in the corpus
+        - (int) passes, the number of full passes of the LDA algorithm over the whole corpus
+        - (int) interations, the max number of iterations the model is allowed for each document in a single pass. 
     '''
     dictionary = corpora.Dictionary(documents)
     corpus = [dictionary.doc2bow(document) for document in documents]
-    lda_model = LdaModel(corpus=corpus, num_topics=2)
-
+    lda_model = LdaModel(corpus=corpus, 
+                         id2word=dictionary,
+                         iterations=iterations,
+                         num_topics=num_topics,
+                         passes=passes,
+                         random_state=random_state)
+    
+    coherence_model = CoherenceModel(model=lda_model, 
+                                     texts=documents,
+                                     dicitonary=dictionary,
+                                     coherence='c_v')
+    
+    coherence_score = coherence_model.get_coherence()
 
     return coherence_score 
