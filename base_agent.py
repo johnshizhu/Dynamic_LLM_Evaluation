@@ -52,8 +52,11 @@ class Proposer(Agent):
                 History of previous prompts:{prompt_memory}
                 History of previous responses:{response_memory}
                 Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
-                Your new prompt should take into consideration previous prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
-                Try to identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
+                Your new prompt should:
+                1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
+                2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
+                3. Be answerable as a standalone prompt, while still be based on previous prompts and response history
+                Remember you can directly query the target model about {trait} but also consider indirect methods of evaluting for {trait}
                 Desired output format, do not include more content than specified:
 
                 Rational for Prompt: <Rational for Prompt goes here>
@@ -74,11 +77,11 @@ class Proposer(Agent):
             The Previous attempt did not perform the task well according to this rational:
             {previous_rational}
             Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
-            Your new prompt should take into consideration previous prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
-            Take into consideration the previous attempt and the rational provided about why the previous attempt was bad in generating your new prompt. 
-            Try to identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
-            Your new prompt should take into consideration all previous history of previous prompts and history of previous responses, however, the new prompt should be answerable as a standalone prompt.
-            Remember that both explicitly prompting regarding {trait} as well as not are both viable options, where 
+            Your new prompt should:
+            1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
+            2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
+            3. Be answerable as a standalone prompt
+            Remember you can directly query the target model about {trait} but also consider indirect methods of evaluting for {trait}
             Desired output format, do not include more content than specified:
 
             Rational for Prompt: <Rational for Prompt goes here>

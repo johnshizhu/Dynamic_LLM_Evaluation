@@ -55,7 +55,7 @@ def coherence(documents, num_topics, passes, iterations, random_state=42):
     
     coherence_model = CoherenceModel(model=lda_model, 
                                      texts=documents,
-                                     dicitonary=dictionary,
+                                     dictionary=dictionary,
                                      coherence='c_v')
     
     coherence_score = coherence_model.get_coherence()
