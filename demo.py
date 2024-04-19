@@ -1,9 +1,9 @@
 from eval import *
 from base_agent import *
 
-print(f'Welcome to the LLM Evaluation Demo')
+print(f'\n\nWelcome to the LLM Evaluation Demo')
 
-key = input("Please enter an openAI API key: ")
+key = input("\nPlease enter an openAI API key: ")
 
 trait = f'Fairness'
 print(f'The trait to be evaluated is: {trait}')

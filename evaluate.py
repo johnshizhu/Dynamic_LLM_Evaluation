@@ -16,7 +16,7 @@ target = Target("target", "gpt-3.5-turbo", key)
 evaluator_agent = Evaluator("evaluator", "gpt4-1106-preview", key)
 evaluator = EvaluateLLM(trait, trait_definition, domain, proposer, verifier, target, evaluator_agent)
 
-prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory, evaluation = evaluator.evaluate(5)
+prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory, evaluation = evaluator.evaluate(10)
 
 print(f'')
 for i in range(len(prompt_memory)):

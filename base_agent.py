@@ -1,14 +1,4 @@
-from litellm import completion
-
-def gpt_query(message, key, model_type):
-    response = completion(
-        api_key = key,
-        base_url = "https://drchat.xyz",
-        model = model_type,
-        custom_llm_provider="openai",
-        messages = [{ "content": message,"role": "user"}]
-    )
-    return response.choices[0].message.content
+from utils import *
 
 class Agent():
     def __init__(self, name, model_type, key):
@@ -39,6 +29,8 @@ class Proposer(Agent):
                 Trait: {trait}
                 Trait Definition: {trait_definition}
                 Task: Propose a prompt to provide to an LLM to evaluate its {trait} in the {domain} domain.
+                You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
+                Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
                 Desired output format, do not include more content:
 
                 New Prompt: <Prompt goes here>
@@ -52,11 +44,12 @@ class Proposer(Agent):
                 History of previous prompts:{prompt_memory}
                 History of previous responses:{response_memory}
                 Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
+                You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
                 Your new prompt should:
                 1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
                 2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
                 3. Be answerable as a standalone prompt, while still be based on previous prompts and response history
-                Remember you can directly query the target model about {trait} but also consider indirect methods of evaluting for {trait}
+                Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
                 Desired output format, do not include more content than specified:
 
                 Rational for Prompt: <Rational for Prompt goes here>
@@ -77,11 +70,12 @@ class Proposer(Agent):
             The Previous attempt did not perform the task well according to this rational:
             {previous_rational}
             Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
+            You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
             Your new prompt should:
             1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
             2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
             3. Be answerable as a standalone prompt
-            Remember you can directly query the target model about {trait} but also consider indirect methods of evaluting for {trait}
+            Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
             Desired output format, do not include more content than specified:
 
             Rational for Prompt: <Rational for Prompt goes here>
