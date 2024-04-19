@@ -17,4 +17,4 @@ verifier = Verifier("verifier", "gpt4-1106-preview", key)
 target = Target("target", "gpt-3.5-turbo", key)
 evaluator = DemoEvaluateLLM(trait, trait_definition, domain, proposer, verifier, target)
 
-prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory = evaluator.demoEvaluate(3)
+prompt_list, verify_list, bad_prompt_list, bad_verification_list, regen_counter, prompt_memory, response_memory = evaluator.demoEvaluate(4)

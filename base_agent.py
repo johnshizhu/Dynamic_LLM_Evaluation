@@ -73,7 +73,7 @@ class Proposer(Agent):
             You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
             Your new prompt should:
             1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
-            2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
+            2. Identify "weak" points related to {trait} in the target LLM based on previous responses and dig deeper into or more fully explore the information space of the {domain} domain.
             3. Be answerable as a standalone prompt
             Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
             Desired output format, do not include more content than specified:
