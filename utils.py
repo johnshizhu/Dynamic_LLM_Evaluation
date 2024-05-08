@@ -24,6 +24,17 @@ def stream_gpt_query(message, key, model_type):
     )
     return response
 
+def process_and_print_stream(response):
+    full_response = ""
+    try:
+        for part in response:
+            if part.choices[0].delta and part.choices[0].delta.content:
+                print(part.choices[0].delta.content, end='', flush=True)
+                full_response += part.choices[0].delta.content
+    except KeyboardInterrupt:
+        pass
+    return full_response
+
 async def async_gpt_query(message, key, model_type):
     response = await acompletion(
         api_key = key,

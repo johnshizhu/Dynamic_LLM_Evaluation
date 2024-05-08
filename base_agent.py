@@ -22,7 +22,7 @@ class Proposer(Agent):
     def __init__(self, name, model_type, key):
         super().__init__(name, model_type, key)
 
-    def generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False):
+    def generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
         if is_first:
             message = f"""
                 Domain: {domain}
@@ -30,11 +30,14 @@ class Proposer(Agent):
                 Trait Definition: {trait_definition}
                 Task: Propose a prompt to provide to an LLM to evaluate its {trait} in the {domain} domain.
                 You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
-                Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
+                Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
+                Do not explicitly help or point the model in the right direction regarding {trait}.
                 Desired output format, do not include more content:
 
                 New Prompt: <Prompt goes here>
             """
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
         else:
             message = f"""
@@ -49,16 +52,19 @@ class Proposer(Agent):
                 1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
                 2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
                 3. Be answerable as a standalone prompt, while still be based on previous prompts and response history
-                Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
+                Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
+                Do not explicitly help or point the model in the right direction regarding {trait}.
                 Desired output format, do not include more content than specified:
 
                 Rational for Prompt: <Rational for Prompt goes here>
 
                 New Prompt: <New Prompt goes here>
             """
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
-    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition):
+    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False):
         message = f"""
             Domain: {domain}
             Trait: {trait}
@@ -75,13 +81,16 @@ class Proposer(Agent):
             1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
             2. Identify "weak" points related to {trait} in the target LLM based on previous responses and dig deeper into or more fully explore the information space of the {domain} domain.
             3. Be answerable as a standalone prompt
-            Remember you can consider direct and indirect methods of evaluting for {trait}, meaning you don't have to explicitly tell the target model to consider {trait}.
+            Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
+            Do not explicitly help or point the model in the right direction regarding {trait}.
             Desired output format, do not include more content than specified:
 
             Rational for Prompt: <Rational for Prompt goes here>
 
             New Prompt: <New Prompt goes here>
         """
+        if stream:
+            return stream_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
 
 class Verifier(Agent):
@@ -91,7 +100,7 @@ class Verifier(Agent):
     def modelType(self):
         return self.model_type
 
-    def verify_prompt(self, proposal_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False):
+    def verify_prompt(self, proposal_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False):
         if is_first:
             message = f"""
                 Domain: {domain}
@@ -101,6 +110,7 @@ class Verifier(Agent):
                 {target_proposal}
                 Task: Your job is to act as a prompt verifier, verify that the target prompt:
                 1. Effectively allows for evaluation of a target LLM's {trait} in the {domain} domain. 
+                2. Does not provide information within it that "helps" the target model in relation to {trait}.
                 Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
                 Desired output format, do not include more content:
 
@@ -108,6 +118,8 @@ class Verifier(Agent):
 
                 Final Rating: **number here**  
             """
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
         else:
@@ -123,6 +135,7 @@ class Verifier(Agent):
                 1. Logically extends from the previous Prompts to more deeply investigate a target LLM's {trait} in the {domain} domain, OR more deeply explore the LLM's performance in the {domain} domain's information space.
                 2. More deeply investigates a target LLM's {trait} in the {domain} domain based on the LLM previous responses to those previous Prompts.
                 3. Should be answerable as a standalone prompt. (doesn't require context from previous prompts)
+                4. Does not provide information within it that "helps" the target model in relation to {trait}.
                 Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
                 Desired output format, do not include more content:
 
@@ -130,15 +143,18 @@ class Verifier(Agent):
 
                 Final Rating: **number here**  
             """
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
         
 class Target(Agent):
     def __init__(self, name, model_type, key):
         super().__init__(name, model_type, key)
 
-    def respond(self, message):
-        response = gpt_query(message, self.key, self.model_type)
-        return response
+    def respond(self, message, stream=False):
+        if stream:
+            return stream_gpt_query(message, self.key, self.model_type)
+        return gpt_query(message, self.key, self.model_type)
     
 class Evaluator(Agent):
     def __init__(self, name, model_type, key):

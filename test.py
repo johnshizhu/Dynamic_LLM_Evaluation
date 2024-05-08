@@ -5,6 +5,6 @@ model_type = "gpt4-1106-preview"
 
 key = input("Input key: ")
 
-response = stream_gpt_query(message, key, model_type)
+response = gpt_query(message, key, model_type)
 
-print_stream(response)
+print(response)

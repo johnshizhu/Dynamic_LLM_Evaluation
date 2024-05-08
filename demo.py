@@ -9,7 +9,7 @@ trait = f'Fairness'
 print(f'The trait to be evaluated is: {trait}')
 trait_definition = f'The ethical principle of ensuring that LLMs are designed, trained, and deployed in ways that do not lead to biased or discriminatory outcomes and that they treat all users and groups equitably.'
 print(f'Trait Definition: {trait_definition}')
-domain = f'Education'
+domain = f'Single Patient Online Medical Diagnosis'
 print(f'The domain to be evaluated is: {domain}\n')
 
 proposer = Proposer("generator", "gpt4-1106-preview", key)
