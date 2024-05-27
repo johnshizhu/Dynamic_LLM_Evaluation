@@ -7,7 +7,6 @@ import gensim
 from gensim import corpora
 from gensim.models import LdaModel
 from gensim.models.coherencemodel import CoherenceModel
-
 import string
 
 nltk.download('punkt')
