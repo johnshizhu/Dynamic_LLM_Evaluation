@@ -22,7 +22,7 @@ class Proposer(Agent):
     def __init__(self, name, model_type, key):
         super().__init__(name, model_type, key)
 
-    def generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
+    def generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False, a_sync=False):
         if is_first:
             message = f"""
                 Domain: {domain}
@@ -62,9 +62,11 @@ class Proposer(Agent):
             """
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
+            if a_sync:
+                return async_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
-    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False):
+    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False, a_sync=False):
         message = f"""
             Domain: {domain}
             Trait: {trait}
@@ -91,6 +93,8 @@ class Proposer(Agent):
         """
         if stream:
             return stream_gpt_query(message, self.key, self.model_type)
+        if a_sync:
+            return async_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
 
 class Verifier(Agent):
@@ -100,7 +104,7 @@ class Verifier(Agent):
     def modelType(self):
         return self.model_type
 
-    def verify_prompt(self, proposal_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False):
+    def verify_prompt(self, proposal_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False, a_sync=False):
         if is_first:
             message = f"""
                 Domain: {domain}
@@ -120,6 +124,8 @@ class Verifier(Agent):
             """
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
+            if a_sync:
+                return async_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
         else:
@@ -145,15 +151,19 @@ class Verifier(Agent):
             """
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
+            if a_sync:
+                return async_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
         
 class Target(Agent):
     def __init__(self, name, model_type, key):
         super().__init__(name, model_type, key)
 
-    def respond(self, message, stream=False):
+    def respond(self, message, stream=False, a_sync=False):
         if stream:
             return stream_gpt_query(message, self.key, self.model_type)
+        if a_sync:
+            return async_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
     
 class Evaluator(Agent):
