@@ -162,9 +162,28 @@ class Proposer(Agent):
             )
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
-            if a_sync:
-                return async_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
+
+    async def async_generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
+        if is_first:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                is_first=True
+            )
+            return await async_gpt_query(message, self.key, self.model_type)
+        else:
+            message = build_message(
+                domain,
+                trait,
+                trait_definition,
+                prompt_memory,
+                response_memory,
+            )
+            return await async_gpt_query(message, self.key, self.model_type)
 
     def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False, a_sync=False):
         message = build_message(
@@ -179,9 +198,20 @@ class Proposer(Agent):
         )
         if stream:
             return stream_gpt_query(message, self.key, self.model_type)
-        if a_sync:
-            return async_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
+
+    async def async_regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False):
+        message = build_message(
+            domain, 
+            trait, 
+            trait_definition, 
+            prompt_memory, 
+            response_memory, 
+            previous_attempt=previous_attempt, 
+            previous_rational=previous_rational, 
+            regen=True, 
+        )
+        return await async_gpt_query(message, self.key, self.model_type) 
 
 class Verifier(Agent):
     def __init__(self, name, model_type, key):
@@ -204,8 +234,6 @@ class Verifier(Agent):
             )
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
-            if a_sync:
-                return async_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
         else:
@@ -221,10 +249,36 @@ class Verifier(Agent):
             )
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
-            if a_sync:
-                return async_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
-        
+
+    async def async_verify_prompt(self, prompt_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False):
+        if is_first:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                target_proposal=target_proposal, 
+                verify=True, 
+                is_first=True
+            )
+            return await async_gpt_query(message, self.key, self.model_type)
+
+        else:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                target_proposal=target_proposal, 
+                verify=True, 
+                is_first=False
+            )
+            return await async_gpt_query(message, self.key, self.model_type)
+
+
 class Target(Agent):
     def __init__(self, name, model_type, key):
         super().__init__(name, model_type, key)
@@ -235,6 +289,9 @@ class Target(Agent):
         if a_sync:
             return async_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
+    
+    async def async_respond(self, message, stream=False):
+        return await async_gpt_query(message, self.key, self.model_type)
     
 class Evaluator(Agent):
     def __init__(self, name, model_type, key):
