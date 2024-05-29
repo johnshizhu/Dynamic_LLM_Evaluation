@@ -25,16 +25,19 @@ async def conversation(iterations, regen_lim, trait, trait_definition, domain, p
         is_first = True if i == 0 else False
 
         # Prompt Generation Sequence
-        prompt = await proposer.generate_prompt(str(prompt_list), str(response_list), domain, trait, trait_definition, is_first, a_sync=True)
-        verify = await verifier.verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first, a_sync=True)
-        return 
+        prompt = await proposer.async_generate_prompt(str(prompt_list), str(response_list), domain, trait, trait_definition, is_first)
+        
+        print("prompt")
+        return
+        
+        verify = await verifier.async_verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first)        
         verify_score = int(re.findall(r'\d+', verify)[-1])
         is_first = False
         if verify_score < 8:
             for i in range(regen_lim):
                 regen_counter += 1
-                prompt = await proposer.regenerate_prompt(str(prompt_list), str(response_list), prompt, verify, domain, trait, trait_definition, a_sync=True)
-                verify = await verifier.verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first, a_sync=True)
+                prompt = await proposer.async_regenerate_prompt(str(prompt_list), str(response_list), prompt, verify, domain, trait, trait_definition)
+                verify = await verifier.async_verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first)
                 verify_score = int(re.findall(r'\d+', verify)[-1])
                 if verify_score > 6:
                     break
@@ -48,7 +51,7 @@ async def conversation(iterations, regen_lim, trait, trait_definition, domain, p
         if start_index != -1:  
             extr_prompt = prompt[start_index+len("New Prompt:"):].strip() # Prompt extraction
             prompt_list.append(extr_prompt)
-            target_response = await target.respond(extr_prompt, a_sync=True) # Target Response
+            target_response = await target.async_respond(extr_prompt) # Target Response
             response_list.append(target_response)  # Remove any leading whitespace
         else:
             print(prompt)

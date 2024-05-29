@@ -166,6 +166,7 @@ class Proposer(Agent):
 
     async def async_generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
         if is_first:
+            print(f'Is First')
             message = build_message(
                 domain, 
                 trait, 
@@ -174,6 +175,7 @@ class Proposer(Agent):
                 response_memory, 
                 is_first=True
             )
+            print(f'Message is: {message}')
             return await async_gpt_query(message, self.key, self.model_type)
         else:
             message = build_message(
