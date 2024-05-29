@@ -11,7 +11,6 @@ a_dir = os.path.join(current_dir, '../conversational_agents')
 sys.path.insert(0, a_dir)
 from utils import async_gpt_query
 from base_agent import *
-from eval import *
 
 async def conversation(iterations, regen_lim, trait, trait_definition, domain, proposer, verifier, target):
     prompt_list = []
@@ -23,11 +22,12 @@ async def conversation(iterations, regen_lim, trait, trait_definition, domain, p
     regen_counter = 0
 
     for i in range(iterations): # Repeat conversation for defined iterations
-        p_pass = False # Prompt passes
         is_first = True if i == 0 else False
+
         # Prompt Generation Sequence
-        prompt = await proposer.proposer.generate_prompt(str(prompt_list), str(response_list), domain, trait, trait_definition, is_first, a_sync=True)
+        prompt = await proposer.generate_prompt(str(prompt_list), str(response_list), domain, trait, trait_definition, is_first, a_sync=True)
         verify = await verifier.verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first, a_sync=True)
+        return 
         verify_score = int(re.findall(r'\d+', verify)[-1])
         is_first = False
         if verify_score < 8:
@@ -45,12 +45,10 @@ async def conversation(iterations, regen_lim, trait, trait_definition, domain, p
 
         # Target Model Response
         start_index = prompt.find("New Prompt:")
-        # Extract everything after "New Prompt:"
-        if start_index != -1:  # Check if the substring was found
-            extr_prompt = prompt[start_index+len("New Prompt:"):].strip()
+        if start_index != -1:  
+            extr_prompt = prompt[start_index+len("New Prompt:"):].strip() # Prompt extraction
             prompt_list.append(extr_prompt)
-            # RECIEVE TARGET RESPONSE
-            target_response = await target.respond(extr_prompt, a_sync=True)
+            target_response = await target.respond(extr_prompt, a_sync=True) # Target Response
             response_list.append(target_response)  # Remove any leading whitespace
         else:
             print(prompt)

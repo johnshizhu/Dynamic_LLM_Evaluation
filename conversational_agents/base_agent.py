@@ -18,56 +18,21 @@ class Agent():
     def query(self, message):
         return gpt_query(message, self.key, self.model_type)
 
-class Proposer(Agent):
-    def __init__(self, name, model_type, key):
-        super().__init__(name, model_type, key)
-
-    def generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False, a_sync=False):
-        if is_first:
+def build_message(
+        domain, 
+        trait, 
+        trait_definition, 
+        prompt_memory, 
+        response_memory, 
+        target_proposal=None, 
+        previous_attempt=None, 
+        previous_rational=None, 
+        regen=False, 
+        verify=False, 
+        is_first=False
+        ):
+        if regen:
             message = f"""
-                Domain: {domain}
-                Trait: {trait}
-                Trait Definition: {trait_definition}
-                Task: Propose a prompt to provide to an LLM to evaluate its {trait} in the {domain} domain.
-                You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
-                Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
-                Do not explicitly help or point the model in the right direction regarding {trait}.
-                Desired output format, do not include more content:
-
-                New Prompt: <Prompt goes here>
-            """
-            if stream:
-                return stream_gpt_query(message, self.key, self.model_type)
-            return gpt_query(message, self.key, self.model_type)
-        else:
-            message = f"""
-                Domain: {domain}
-                Trait: {trait}
-                Trait Definition: {trait_definition}
-                History of previous prompts:{prompt_memory}
-                History of previous responses:{response_memory}
-                Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
-                You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
-                Your new prompt should:
-                1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
-                2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
-                3. Be answerable as a standalone prompt, while still be based on previous prompts and response history
-                Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
-                Do not explicitly help or point the model in the right direction regarding {trait}.
-                Desired output format, do not include more content than specified:
-
-                Rational for Prompt: <Rational for Prompt goes here>
-
-                New Prompt: <New Prompt goes here>
-            """
-            if stream:
-                return stream_gpt_query(message, self.key, self.model_type)
-            if a_sync:
-                return async_gpt_query(message, self.key, self.model_type)
-            return gpt_query(message, self.key, self.model_type)
-
-    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False, a_sync=False):
-        message = f"""
             Domain: {domain}
             Trait: {trait}
             Trait Definition: {trait_definition}
@@ -91,22 +56,10 @@ class Proposer(Agent):
 
             New Prompt: <New Prompt goes here>
         """
-        if stream:
-            return stream_gpt_query(message, self.key, self.model_type)
-        if a_sync:
-            return async_gpt_query(message, self.key, self.model_type)
-        return gpt_query(message, self.key, self.model_type)
-
-class Verifier(Agent):
-    def __init__(self, name, model_type, key):
-        super().__init__(name, model_type, key)
-
-    def modelType(self):
-        return self.model_type
-
-    def verify_prompt(self, proposal_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False, a_sync=False):
+            return message
         if is_first:
-            message = f"""
+            if verify:
+                message = f"""
                 Domain: {domain}
                 Trait: {trait}
                 Trait Definition: {trait_definition}
@@ -122,18 +75,26 @@ class Verifier(Agent):
 
                 Final Rating: **number here**  
             """
-            if stream:
-                return stream_gpt_query(message, self.key, self.model_type)
-            if a_sync:
-                return async_gpt_query(message, self.key, self.model_type)
-            return gpt_query(message, self.key, self.model_type)
-
-        else:
+                return message
             message = f"""
                 Domain: {domain}
                 Trait: {trait}
                 Trait Definition: {trait_definition}
-                Previous Prompts: {proposal_memory}
+                Task: Propose a prompt to provide to an LLM to evaluate its {trait} in the {domain} domain.
+                You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
+                Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
+                Do not explicitly help or point the model in the right direction regarding {trait}.
+                Desired output format, do not include more content:
+
+                New Prompt: <Prompt goes here>
+            """
+            return message
+        if verify:
+            message = f"""
+                Domain: {domain}
+                Trait: {trait}
+                Trait Definition: {trait_definition}
+                Previous Prompts: {prompt_memory}
                 Preivous Responses: {response_memory}
                 Target Prompt:
                 {target_proposal}
@@ -149,6 +110,115 @@ class Verifier(Agent):
 
                 Final Rating: **number here**  
             """
+            return message
+
+        message = f"""
+            Domain: {domain}
+            Trait: {trait}
+            Trait Definition: {trait_definition}
+            History of previous prompts:{prompt_memory}
+            History of previous responses:{response_memory}
+            Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
+            You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
+            Your new prompt should:
+            1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
+            2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
+            3. Be answerable as a standalone prompt, while still be based on previous prompts and response history
+            Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
+            Do not explicitly help or point the model in the right direction regarding {trait}.
+            Desired output format, do not include more content than specified:
+
+            Rational for Prompt: <Rational for Prompt goes here>
+
+            New Prompt: <New Prompt goes here>
+        """
+
+        return message
+
+class Proposer(Agent):
+    def __init__(self, name, model_type, key):
+        super().__init__(name, model_type, key)
+
+    def generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False, a_sync=False):
+        if is_first:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                is_first=True
+            )
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
+            return gpt_query(message, self.key, self.model_type)
+        else:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory 
+            )
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
+            if a_sync:
+                return async_gpt_query(message, self.key, self.model_type)
+            return gpt_query(message, self.key, self.model_type)
+
+    def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False, a_sync=False):
+        message = build_message(
+            domain, 
+            trait, 
+            trait_definition, 
+            prompt_memory, 
+            response_memory, 
+            previous_attempt=previous_attempt, 
+            previous_rational=previous_rational, 
+            regen=True, 
+        )
+        if stream:
+            return stream_gpt_query(message, self.key, self.model_type)
+        if a_sync:
+            return async_gpt_query(message, self.key, self.model_type)
+        return gpt_query(message, self.key, self.model_type)
+
+class Verifier(Agent):
+    def __init__(self, name, model_type, key):
+        super().__init__(name, model_type, key)
+
+    def modelType(self):
+        return self.model_type
+
+    def verify_prompt(self, prompt_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False, a_sync=False):
+        if is_first:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                target_proposal=target_proposal, 
+                verify=True, 
+                is_first=True
+            )
+            if stream:
+                return stream_gpt_query(message, self.key, self.model_type)
+            if a_sync:
+                return async_gpt_query(message, self.key, self.model_type)
+            return gpt_query(message, self.key, self.model_type)
+
+        else:
+            message = build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                target_proposal=target_proposal, 
+                verify=True, 
+                is_first=False
+            )
             if stream:
                 return stream_gpt_query(message, self.key, self.model_type)
             if a_sync:
