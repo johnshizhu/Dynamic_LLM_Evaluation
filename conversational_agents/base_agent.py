@@ -164,7 +164,7 @@ class Proposer(Agent):
                 return stream_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
-    async def async_generate_prompt(self, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
+    async def async_generate_prompt(self, session, config, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
         if is_first:
             print(f'Is First')
             message = build_message(
@@ -176,7 +176,7 @@ class Proposer(Agent):
                 is_first=True
             )
             print(f'Message is: {message}')
-            return await async_gpt_query(message, self.key, self.model_type)
+            return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config)
         else:
             message = build_message(
                 domain,
@@ -185,7 +185,7 @@ class Proposer(Agent):
                 prompt_memory,
                 response_memory,
             )
-            return await async_gpt_query(message, self.key, self.model_type)
+            return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config)
 
     def regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False, a_sync=False):
         message = build_message(
@@ -202,7 +202,7 @@ class Proposer(Agent):
             return stream_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
 
-    async def async_regenerate_prompt(self, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False):
+    async def async_regenerate_prompt(self, session, config, prompt_memory, response_memory, previous_attempt, previous_rational, domain, trait, trait_definition, stream=False):
         message = build_message(
             domain, 
             trait, 
@@ -253,7 +253,7 @@ class Verifier(Agent):
                 return stream_gpt_query(message, self.key, self.model_type)
             return gpt_query(message, self.key, self.model_type)
 
-    async def async_verify_prompt(self, prompt_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False):
+    async def async_verify_prompt(self, session, config, prompt_memory, response_memory, target_proposal, domain, trait, trait_definition, is_first=False, stream=False):
         if is_first:
             message = build_message(
                 domain, 
@@ -265,7 +265,7 @@ class Verifier(Agent):
                 verify=True, 
                 is_first=True
             )
-            return await async_gpt_query(message, self.key, self.model_type)
+            return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config)
 
         else:
             message = build_message(
@@ -278,7 +278,7 @@ class Verifier(Agent):
                 verify=True, 
                 is_first=False
             )
-            return await async_gpt_query(message, self.key, self.model_type)
+            return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config)
 
 
 class Target(Agent):
@@ -292,8 +292,8 @@ class Target(Agent):
             return async_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
     
-    async def async_respond(self, message, stream=False):
-        return await async_gpt_query(message, self.key, self.model_type)
+    async def async_respond(self, session, config, message, stream=False):
+        return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config)
     
 class Evaluator(Agent):
     def __init__(self, name, model_type, key):
