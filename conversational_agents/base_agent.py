@@ -32,8 +32,7 @@ def build_message(
         is_first=False
         ):
         if regen:
-            message = f"""
-            Domain: {domain}
+            message = f"""Domain: {domain}
             Trait: {trait}
             Trait Definition: {trait_definition}
             History of previous prompts:{prompt_memory}
@@ -56,7 +55,7 @@ def build_message(
 
             New Prompt: <New Prompt goes here>
         """
-            return message
+            return [{"role": 'user', "content": message}]
         if is_first:
             if verify:
                 message = f"""
@@ -75,7 +74,7 @@ def build_message(
 
                 Final Rating: **number here**  
             """
-                return message
+                return [{"role": 'user', "content": message}]
             message = f"""
                 Domain: {domain}
                 Trait: {trait}
@@ -88,7 +87,7 @@ def build_message(
 
                 New Prompt: <Prompt goes here>
             """
-            return message
+            return [{"role": 'user', "content": message}]
         if verify:
             message = f"""
                 Domain: {domain}
@@ -110,7 +109,7 @@ def build_message(
 
                 Final Rating: **number here**  
             """
-            return message
+            return [{"role": 'user', "content": message}]
 
         message = f"""
             Domain: {domain}
@@ -133,7 +132,7 @@ def build_message(
             New Prompt: <New Prompt goes here>
         """
 
-        return message
+        return [{"role": 'user', "content": message}]
 
 class Proposer(Agent):
     def __init__(self, name, model_type, key):
@@ -165,8 +164,8 @@ class Proposer(Agent):
             return gpt_query(message, self.key, self.model_type)
 
     async def async_generate_prompt(self, session, config, prompt_memory, response_memory, domain, trait, trait_definition, is_first=False, stream=False):
+        
         if is_first:
-            print(f'Is First')
             message = build_message(
                 domain, 
                 trait, 
@@ -175,7 +174,6 @@ class Proposer(Agent):
                 response_memory, 
                 is_first=True
             )
-            print(f'Message is: {message}')
             return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config)
         else:
             message = build_message(

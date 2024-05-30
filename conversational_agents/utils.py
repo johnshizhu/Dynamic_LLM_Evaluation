@@ -49,7 +49,7 @@ async def async_llm(session, messages, base_url, api_key, model, config):
         }
     ) as response:
         response = await response.json()
-    return response
+    return response['choices'][0]['message']['content']
 
 def print_stream(response):
     for part in response:

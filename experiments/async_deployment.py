@@ -12,7 +12,7 @@ sys.path.insert(0, a_dir)
 from utils import async_gpt_query
 from base_agent import *
 
-async def conversation(iterations, regen_lim, trait, trait_definition, domain, proposer, verifier, target):
+async def conversation(session, config, iterations, regen_lim, trait, trait_definition, domain, proposer, verifier, target):
     prompt_list = []
     prompt_list_r = [] # with rational
     verify_list = []
@@ -25,12 +25,14 @@ async def conversation(iterations, regen_lim, trait, trait_definition, domain, p
         is_first = True if i == 0 else False
 
         # Prompt Generation Sequence
-        prompt = await proposer.async_generate_prompt(str(prompt_list), str(response_list), domain, trait, trait_definition, is_first)
-        
-        print("prompt")
-        return
-        
-        verify = await verifier.async_verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first)        
+        prompt = await proposer.async_generate_prompt(session, config, str(prompt_list), str(response_list), domain, trait, trait_definition, is_first=is_first)        
+        verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first) 
+
+        print(f'Prompt is: {prompt}')
+        print(f'Verify is: {verify}')
+
+        return 
+
         verify_score = int(re.findall(r'\d+', verify)[-1])
         is_first = False
         if verify_score < 8:
