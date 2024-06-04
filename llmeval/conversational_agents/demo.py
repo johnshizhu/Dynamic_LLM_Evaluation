@@ -1,5 +1,5 @@
-from eval import *
-from base_agent import *
+from llmeval.conversational_agents.eval import *
+from llmeval.conversational_agents.base_agent import *
 
 print(f'\n\nWelcome to the LLM Evaluation Demo')
 

@@ -1,4 +1,4 @@
-from utils import *
+from llmeval.conversational_agents.utils import *
 
 class Agent():
     def __init__(self, name, model_type, key):
@@ -211,7 +211,7 @@ class Proposer(Agent):
             previous_rational=previous_rational, 
             regen=True, 
         )
-        return await async_gpt_query(message, self.key, self.model_type) 
+        return await async_llm(session, message, "https://drchat.xyz", self.key, self.model_type, config) 
 
 class Verifier(Agent):
     def __init__(self, name, model_type, key):
@@ -286,8 +286,6 @@ class Target(Agent):
     def respond(self, message, stream=False, a_sync=False):
         if stream:
             return stream_gpt_query(message, self.key, self.model_type)
-        if a_sync:
-            return async_gpt_query(message, self.key, self.model_type)
         return gpt_query(message, self.key, self.model_type)
     
     async def async_respond(self, session, config, message, stream=False):

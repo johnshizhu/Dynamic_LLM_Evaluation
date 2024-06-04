@@ -1,4 +1,4 @@
-from utils import *
+from llmeval.conversational_agents.utils import *
 import asyncio
 import aiohttp
 

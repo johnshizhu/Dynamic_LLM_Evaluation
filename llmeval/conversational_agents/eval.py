@@ -1,5 +1,5 @@
 import re
-from utils import *
+from llmeval.conversational_agents.utils import *
 
 class EvaluateLLM():
     def __init__(self, trait, trait_definition, domain, proposer, verifier, target, evaluator):

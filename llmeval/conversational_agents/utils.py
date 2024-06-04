@@ -1,9 +1,6 @@
 import os
 import csv
 from litellm import completion, acompletion
-import asyncio
-import aiohttp
-import json
 
 def gpt_query(message, key, model_type):
     response = completion(
@@ -49,7 +46,11 @@ async def async_llm(session, messages, base_url, api_key, model, config):
         }
     ) as response:
         response = await response.json()
-    return response['choices'][0]['message']['content']
+    if response == None:
+        print("Error, Null response")
+        return 
+    else:
+        return response['choices'][0]['message']['content']
 
 def print_stream(response):
     for part in response:

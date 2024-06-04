@@ -6,11 +6,8 @@ import os
 import aiohttp
 import asyncio
 import re
-current_dir = os.path.dirname(os.path.abspath(__file__))
-a_dir = os.path.join(current_dir, '../conversational_agents')
-sys.path.insert(0, a_dir)
-from utils import async_gpt_query
-from base_agent import *
+from llmeval.conversational_agents.utils import async_gpt_query
+from llmeval.conversational_agents.base_agent import *
 
 async def conversation(session, config, iterations, regen_lim, trait, trait_definition, domain, proposer, verifier, target):
     prompt_list = []
@@ -28,18 +25,13 @@ async def conversation(session, config, iterations, regen_lim, trait, trait_defi
         prompt = await proposer.async_generate_prompt(session, config, str(prompt_list), str(response_list), domain, trait, trait_definition, is_first=is_first)        
         verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first) 
 
-        print(f'Prompt is: {prompt}')
-        print(f'Verify is: {verify}')
-
-        return 
-
         verify_score = int(re.findall(r'\d+', verify)[-1])
         is_first = False
         if verify_score < 8:
             for i in range(regen_lim):
                 regen_counter += 1
-                prompt = await proposer.async_regenerate_prompt(str(prompt_list), str(response_list), prompt, verify, domain, trait, trait_definition)
-                verify = await verifier.async_verify_prompt(str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first)
+                prompt = await proposer.async_regenerate_prompt(session, config, str(prompt_list), str(response_list), prompt, verify, domain, trait, trait_definition)
+                verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first)
                 verify_score = int(re.findall(r'\d+', verify)[-1])
                 if verify_score > 6:
                     break
@@ -53,7 +45,8 @@ async def conversation(session, config, iterations, regen_lim, trait, trait_defi
         if start_index != -1:  
             extr_prompt = prompt[start_index+len("New Prompt:"):].strip() # Prompt extraction
             prompt_list.append(extr_prompt)
-            target_response = await target.async_respond(extr_prompt) # Target Response
+            extr_prompt = [{'role': 'user', 'content': extr_prompt}] # Format for POST
+            target_response = await target.async_respond(session, config, extr_prompt) # Target Response
             response_list.append(target_response)  # Remove any leading whitespace
         else:
             print(prompt)
@@ -61,30 +54,25 @@ async def conversation(session, config, iterations, regen_lim, trait, trait_defi
     return prompt_list, prompt_list_r, verify_list, bad_prompt_list, bad_verification_list, response_list, regen_counter
 
 
-def multi_instance_evaluation(
+async def multi_instance_conversation(
+        session, 
+        config, 
         num_instances,
         iterations,
         regen_lim,
-        generator,
-        validator,
-        target,
         trait,
         trait_definition,
-        domain
+        domain,
+        proposer,
+        verifier,
+        target,
     ):
-    '''
-        This function concurrently runs multiple conversations between defined agents and target  
-        
-        num_instances (int) - number of concurrent conversations
-        iterations (int)    - conversational depth
-        regen_lim  (int)    - limit of times of regeneration in case of bad prompt
-        generator (string)  - model type of generator
-        validator (string)  - model type of validator
-        target    (string)  - model type of target model
-        trait     (string)  - name of trait of interest
-        trait_definition (string) - trait definition
-        domain    (string)  - specified domain
-    '''
 
+    tasks = [
+        conversation(session, config, iterations, regen_lim, trait, trait_definition, domain, proposer, verifier, target)
+        for _ in range(num_instances)
+    ]
 
-    return 
+    results = await asyncio.gather(*tasks)
+
+    return results
