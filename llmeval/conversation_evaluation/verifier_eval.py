@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/Users/john/Desktop/LLM_Trust_Trust_Evaluation/')
 from llmeval.conversational_agents.eval import *
 from llmeval.conversational_agents.base_agent import *
 

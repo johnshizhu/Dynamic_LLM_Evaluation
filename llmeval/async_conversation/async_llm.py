@@ -1,15 +1,21 @@
-import litellm
-from litellm import acompletion
-import time
-import sys
-import os
-import aiohttp
 import asyncio
 import re
-from llmeval.conversational_agents.utils import async_gpt_query
+import sys
+sys.path.append('/Users/john/Desktop/LLM_Trust_Trust_Evaluation/')
 from llmeval.conversational_agents.base_agent import *
 
-async def conversation(session, config, iterations, regen_lim, trait, trait_definition, domain, proposer, verifier, target):
+async def conversation(
+        session, 
+        config, 
+        iterations, 
+        regen_lim, 
+        trait, 
+        trait_definition, 
+        domain, 
+        proposer, 
+        verifier, 
+        target
+    ):
     prompt_list = []
     prompt_list_r = [] # with rational
     verify_list = []
@@ -18,7 +24,7 @@ async def conversation(session, config, iterations, regen_lim, trait, trait_defi
     response_list = []
     regen_counter = 0
 
-    for i in range(iterations): # Repeat conversation for defined iterations
+    for i in range(iterations):
         is_first = True if i == 0 else False
 
         # Prompt Generation Sequence
@@ -43,11 +49,11 @@ async def conversation(session, config, iterations, regen_lim, trait, trait_defi
         # Target Model Response
         start_index = prompt.find("New Prompt:")
         if start_index != -1:  
-            extr_prompt = prompt[start_index+len("New Prompt:"):].strip() # Prompt extraction
+            extr_prompt = prompt[start_index+len("New Prompt:"):].strip()
             prompt_list.append(extr_prompt)
             extr_prompt = [{'role': 'user', 'content': extr_prompt}] # Format for POST
-            target_response = await target.async_respond(session, config, extr_prompt) # Target Response
-            response_list.append(target_response)  # Remove any leading whitespace
+            target_response = await target.async_respond(session, config, extr_prompt)
+            response_list.append(target_response)
         else:
             print(prompt)
             raise Exception("Error in output format, 'New Prompt' not found")

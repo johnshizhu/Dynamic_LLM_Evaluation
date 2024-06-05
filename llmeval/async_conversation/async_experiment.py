@@ -1,5 +1,7 @@
 import asyncio
 import aiohttp
+import sys
+sys.path.append('/Users/john/Desktop/LLM_Trust_Trust_Evaluation/')
 from llmeval.async_conversation.async_llm import *
 from llmeval.conversational_agents.utils import async_gpt_query
 from llmeval.conversational_agents.base_agent import Proposer, Verifier, Target
