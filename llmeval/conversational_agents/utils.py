@@ -45,6 +45,18 @@ async def async_llm(session, messages, base_url, api_key, model, config):
             **config,
         }
     ) as response:
+        if response.status != 200:
+            print(f"Error: Received status code {response.status}")
+            print(f"Messages: {messages}")
+            print(f"base_url: {base_url}")
+            print(f"model: {model}")
+            print(f"config: {config}")
+            print(f"Response Type: {type(response)}")
+        
+        if response.content_type != "application/json":
+            print(f"Error: Unexpected content type {response.content_type}")
+            print(await response.text())  # Print the response text for debugging
+
         response = await response.json()
     if response == None:
         print("Error, Null response")

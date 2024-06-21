@@ -29,7 +29,15 @@ async def conversation(
 
         # Prompt Generation Sequence
         prompt = await proposer.async_generate_prompt(session, config, str(prompt_list), str(response_list), domain, trait, trait_definition, is_first=is_first)        
-        verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first) 
+        verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first=is_first) 
+
+        if prompt == None:            
+            raise Exception("Propose Returned None")
+            
+        if verify == None:
+            raise Exception("Verify Returned None")
+        
+        print(f'Finished generating prompt and verification for iteration {i}')
 
         verify_score = int(re.findall(r'\d+', verify)[-1])
         is_first = False
@@ -37,7 +45,7 @@ async def conversation(
             for i in range(regen_lim):
                 regen_counter += 1
                 prompt = await proposer.async_regenerate_prompt(session, config, str(prompt_list), str(response_list), prompt, verify, domain, trait, trait_definition)
-                verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first)
+                verify = await verifier.async_verify_prompt(session, config, str(prompt_list), str(response_list), prompt, domain, trait, trait_definition, is_first=is_first)
                 verify_score = int(re.findall(r'\d+', verify)[-1])
                 if verify_score > 6:
                     break
