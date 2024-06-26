@@ -423,7 +423,7 @@ def task_id_generator_function():
 
 @click.command()
 @click.argument("input_filepath", type=str)
-@click.argument("output_filepath", type=str, default="/Users/john/Desktop/LLM_Trust_Trust_Evaluation/llmeval/parallel/output_start.jsonl", required=False)
+@click.argument("output_filepath", type=str, default=r"C:\Users\johns\OneDrive\Desktop\LLM_Trust_Trust_Evaluation\llmeval\parallel\output_start.jsonl", required=False)
 @click.option("--base_url", type=str, default="https://drchat.xyz")
 @click.option("--api_key", type=str, default="sk-7AKI_8FfvamSDIDpRBfxsg")
 @click.option("--model", type=str, default="gpt4-1106-preview")

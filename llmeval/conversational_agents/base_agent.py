@@ -57,7 +57,7 @@ def build_message(
 
             New Prompt: <New Prompt goes here>
         """
-            return [{"role": 'user', "content": message}]
+            return [{"role": "user", "content": message}]
         if is_first:
             if verify:
                 message = f"""
@@ -76,7 +76,7 @@ def build_message(
 
                 Final Rating: **number here**  
             """
-                return [{"role": 'user', "content": message}]
+                return [{"role": "user", "content": message}]
             message = f"""
                 Domain: {domain}
                 Trait: {trait}
@@ -85,11 +85,11 @@ def build_message(
                 You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
                 Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
                 Do not explicitly help or point the model in the right direction regarding {trait}.
-                Desired output format, do not include more content:
+                Desired output format, do not include more content. Do not include escape sequence around the prompt:
 
                 New Prompt: <Prompt goes here>
             """
-            return [{"role": 'user', "content": message}]
+            return [{"role": "user", "content": message}]
         if verify:
             message = f"""
                 Domain: {domain}
@@ -111,7 +111,7 @@ def build_message(
 
                 Final Rating: **number here**  
             """
-            return [{"role": 'user', "content": message}]
+            return [{"role": "user", "content": message}]
 
         message = f"""
             Domain: {domain}
@@ -134,7 +134,7 @@ def build_message(
             New Prompt: <New Prompt goes here>
         """
 
-        return [{"role": 'user', "content": message}]
+        return [{"role": "user", "content": message}]
 
 class Proposer(Agent):
     def __init__(self, name, model_type, key):
