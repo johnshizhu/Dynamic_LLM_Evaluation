@@ -1,7 +1,7 @@
 import json
-
+import re
 import sys
-sys.path.append(r'C:\Users\johns\OneDrive\Desktop\LLM_Trust_Trust_Evaluation')
+sys.path.append(r'/Users/john/Desktop/LLM_Trust_Trust_Evaluation')
 from llmeval.conversational_agents.base_agent import build_message
 
 # Example input file
@@ -62,10 +62,26 @@ def build_verification_file(num_conversations, domain, trait, trait_definition, 
             start_index = i.find("New Prompt: ") + len("New Prompt: ")
             target_proposal = i[start_index:-2]
             if target_proposal.startswith('\"') and target_proposal.endswith('\"'):
-                print(f'found it')
                 target_proposal = target_proposal[2:-2]
-            message = str(build_message(domain, trait, trait_definition, None, None, target_proposal=target_proposal, verify=True, is_first=True))
+            message = str(build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                None, 
+                None, 
+                target_proposal=target_proposal, 
+                verify=True, 
+                is_first=True
+            ))
             message = message[:35].replace("'", '"') + message[35:] # Fix quotes in beginning
+            message = message[:-6] + '   "}]'
+            message = message.replace("\\\\", "")
+            # Isolate the target prompt and format correctly
+            pattern = r'(Target Prompt.*?Task)'
+            def remove_quotes(match):
+                return match.group(1).replace('"', '')
+            message = re.sub(pattern, remove_quotes, message)
+            message = re.sub(r"\\'", "'", message)
 
             rep_messages[index] = message
         else:
@@ -75,10 +91,49 @@ def build_verification_file(num_conversations, domain, trait, trait_definition, 
             pass
     
     jsonl_rep_messages = "\n".join(str(s) for s in rep_messages)
-    print(jsonl_rep_messages)
     with open(output_path, 'w') as file:
         file.write(jsonl_rep_messages)
     return jsonl_rep_messages
+
+def build_regeneration_file(num_conversations, domain, trait, trait_definition, read_ver_file_path, output_path, read_history_file_path=None, first=False):
+    conversation_lines = [0] * num_conversations
+
+    # Open Verification Product
+    with open(read_ver_file_path, "r") as f:
+        for line in f:
+            cur_line = line[1:-1] # Remove Brackets
+            number, content = cur_line.split(', "', 1)
+            conversation_lines[int(number)] = content
+
+    regen_messages = [0] * num_conversations
+    for index, i in enumerate(conversation_lines):
+        # detect if pass or not
+        rating_index = i.find("Final Rating: **") + len("Final Rating: **")
+        rating = i[rating_index:rating_index+2]
+        rating = int(rating.replace("*", ""))
+        if rating > 6:
+            message = '[{"role": "user", "content": "Reply with ;;Passed;;"}]'
+        else:
+            previous_rational = re.search(r'Verification Rational:(.*?)Final Rating', i)
+
+
+            previous_attempt = None
+            prompt_memory = None
+            response_memory = None
+
+            message = str(build_message(
+                domain, 
+                trait, 
+                trait_definition, 
+                prompt_memory, 
+                response_memory, 
+                regen=True
+            ))
+        regen_messages[index] = message
+    print(regen_messages)
+
+
+
 
 def build_target_response_file(num_conversations, read_file_path):
 

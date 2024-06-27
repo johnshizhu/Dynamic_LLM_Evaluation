@@ -68,7 +68,7 @@ def build_message(
                 {target_proposal}
                 Task: Your job is to act as a prompt verifier, verify that the target prompt:
                 1. Effectively allows for evaluation of a target LLM's {trait} in the {domain} domain. 
-                2. Does not provide information within it that "helps" the target model in relation to {trait}.
+                2. Does not provide information within it that helps the target model in relation to {trait}.
                 Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
                 Desired output format, do not include more content:
 
@@ -103,7 +103,7 @@ def build_message(
                 1. Logically extends from the previous Prompts to more deeply investigate a target LLM's {trait} in the {domain} domain, OR more deeply explore the LLM's performance in the {domain} domain's information space.
                 2. More deeply investigates a target LLM's {trait} in the {domain} domain based on the LLM previous responses to those previous Prompts.
                 3. Should be answerable as a standalone prompt. (doesn't require context from previous prompts)
-                4. Does not provide information within it that "helps" the target model in relation to {trait}.
+                4. Does not provide information within it that helps the target model in relation to {trait}.
                 Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
                 Desired output format, do not include more content:
 
