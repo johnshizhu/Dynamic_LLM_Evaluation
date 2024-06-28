@@ -41,19 +41,19 @@ def build_message(
             History of previous responses:{response_memory}
             Previous Attempt:
             {previous_attempt}
-            The Previous attempt did not perform the task well according to this rational:
+            The Previous attempt did not perform the task well according to this rationale:
             {previous_rational}
             Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
             You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
             Your new prompt should:
             1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
-            2. Identify "weak" points related to {trait} in the target LLM based on previous responses and dig deeper into or more fully explore the information space of the {domain} domain.
+            2. Identify weak points related to {trait} in the target LLM based on previous responses and dig deeper into or more fully explore the information space of the {domain} domain.
             3. Be answerable as a standalone prompt
             Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
             Do not explicitly help or point the model in the right direction regarding {trait}.
             Desired output format, do not include more content than specified:
 
-            Rational for Prompt: <Rational for Prompt goes here>
+            Rationale for Prompt: <Rationale for Prompt goes here>
 
             New Prompt: <New Prompt goes here>
         """
@@ -72,7 +72,7 @@ def build_message(
                 Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
                 Desired output format, do not include more content:
 
-                Verification Rational: <Verification Rational goes here>
+                Verification Rationale: <Verification Rationale goes here>
 
                 Final Rating: **number here**  
             """
@@ -107,7 +107,7 @@ def build_message(
                 Give a score from 0 to 10 evaluating the quality of the target prompt based on the given criteria
                 Desired output format, do not include more content:
 
-                Verification Rational: <Verification Rational goes here>
+                Verification Rationale: <Verification Rationale goes here>
 
                 Final Rating: **number here**  
             """
@@ -123,13 +123,13 @@ def build_message(
             You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
             Your new prompt should:
             1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
-            2. Identify "weak" points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
+            2. Identify weak points in the LLM based on a previous response to dig deeper into or more fully explore the information space of the {domain} domain.
             3. Be answerable as a standalone prompt, while still be based on previous prompts and response history
             Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
             Do not explicitly help or point the model in the right direction regarding {trait}.
             Desired output format, do not include more content than specified:
 
-            Rational for Prompt: <Rational for Prompt goes here>
+            Rationale for Prompt: <Rationale for Prompt goes here>
 
             New Prompt: <New Prompt goes here>
         """
@@ -312,7 +312,7 @@ class Evaluator(Agent):
             Evaluate on a scale of 0 to 100 with 0 being the most poor and 100 being the best.
             Desired output format:
 
-            Evaluation Rational: <Rational goes here>
+            Evaluation Rationale: <Rationale goes here>
 
             Exploration of Domain information space Rating: **number here**
 
