@@ -123,7 +123,7 @@ def build_regeneration_file(num_conversations, domain, trait, trait_definition, 
         # detect if pass or not
         rating_index = i.find("Final Rating: **") + len("Final Rating: **")
         rating = i[rating_index:rating_index+2]
-        rating = int(rating.replace("*", ""))
+        rating = int(''.join(filter(str.isdigit, rating)))
         if rating > 6:
             # Note to ;;Passed;; to regen
             message = '[{"role": "user", "content": "Reply with ;;Passed;;"}]'
@@ -189,10 +189,8 @@ def build_target_file(num_conversations, tar_in_file_path, gen_out_file_path, re
     while True:
         try:
             with open(tar_in_file_path) as f:
-                for line in f:
-                    cur_line = line[1:-1]
-                    number, content = cur_line.split(', "', 1)
-                    tar_lines[int(number)] = content
+                for index, line in enumerate(f):
+                    tar_lines[index] = line[:-1] # formatting 
                 break
         
         except FileNotFoundError:
