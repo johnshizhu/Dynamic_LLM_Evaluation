@@ -1,7 +1,7 @@
 import json
 import re
 import sys
-sys.path.append(r'C:\Users\johns\OneDrive\Desktop\LLM_Trust_Trust_Evaluation')
+sys.path.append("/Users/john/Desktop/LLM_Trust_Trust_Evaluation/")
 from llmeval.conversational_agents.base_agent import build_message
 
 # Example input file
@@ -30,7 +30,8 @@ from llmeval.conversational_agents.base_agent import build_message
 '''
 
 def build_generation_file(num_conversations, domain, trait, trait_definition, output_path, read_response_path=None, read_history_path=None, first=False):
-    # read file path points to the target model output
+    
+    # Initial Generation
     if first:
         message = str(build_message(domain, trait, trait_definition, None, None, is_first=True))
         message = message[:35].replace("'", '"') + message[35:] # Fix quotes
@@ -38,6 +39,8 @@ def build_generation_file(num_conversations, domain, trait, trait_definition, ou
         jsonl_rep_messages = "\n".join(str(s) for s in rep_messages)
         with open(output_path, 'w') as file:
             file.write(jsonl_rep_messages)
+    
+    # Iterative Generation
     else:
         conversation_lines = [0] * num_conversations
         with open(read_response_path, "r") as response:
@@ -176,7 +179,11 @@ def check_regen_results(num_conversations, read_regen_file):
     return True
 
 def build_target_file(num_conversations, tar_in_file_path, gen_out_file_path, regen_out_file_path):
-
+    '''
+        Builds the tar_in.jsonl file (input to target model)
+        - Will build new tar_in.jsonl file
+        - Will update previously built tar_in.jsonl file with new information from regen_out.jsonl
+    '''
     # Read in or Make empty tar_in file
     tar_lines = [0] * num_conversations
     while True:
@@ -200,9 +207,9 @@ def build_target_file(num_conversations, tar_in_file_path, gen_out_file_path, re
             for line in f:
                 cur_line = line[1:-1]
                 number, content = cur_line.split(', "', 1)
-                prompt_index = cur_line.find("New Prompt:") + len("New Prompt:")
-                prompt = cur_line[prompt_index:]
-                tar_lines[number] = str([{"role": "user", "content": prompt}])
+                prompt_index = cur_line.find("New Prompt:") + len("New Prompt:") + 1
+                prompt = cur_line[prompt_index:-2].replace('"', "")
+                tar_lines[int(number)] = str([{"role": "user", "content": prompt}])
     
     # Update the tar_in file with the output of the regen_out file
     with open(regen_out_file_path) as f:
@@ -212,10 +219,24 @@ def build_target_file(num_conversations, tar_in_file_path, gen_out_file_path, re
             if ";;Passed;;" in content:
                 continue
             else:   # update with content from regen_out
-                pass # placeholder
-                
+                new_prompt_index = content.find("New Prompt:") + len("New Prompt:")
+                new_prompt = content[new_prompt_index:-2].replace('"', "")
+                tar_lines[int(number)] = str([{"role": "user", "content": new_prompt}])
 
+    # Message Formatting
+    for index, message in enumerate(tar_lines):
+        # Message Formatting
+        message = message[:30].replace("'", '"') + message[30:] # Fix quotes in beginning
+        message = message[:-3] + '"}]'
+        message = message.replace("\\\\", "")
+        message = re.sub(r"\\'", "'", message)
+        tar_lines[index] = message
 
+    jsonl_rep_messages = "\n".join(str(s) for s in tar_lines)
+    with open(tar_in_file_path, 'w') as file:
+        file.write(jsonl_rep_messages)
+
+    return jsonl_rep_messages
 
 def build_target_response_file(num_conversations, read_file_path):
 
