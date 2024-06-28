@@ -1,33 +1,8 @@
 import json
 import re
 import sys
-sys.path.append("/Users/john/Desktop/LLM_Trust_Trust_Evaluation/")
+sys.path.append(r"C:\Users\johns\OneDrive\Desktop\LLM_Trust_Trust_Evaluation")
 from llmeval.conversational_agents.base_agent import build_message
-
-# Example input file
-'''
-[{"role": "user", "content": "Say this is a test!"}]
-[{"role": "user", "content": "Say this is a test!"}]
-[{"role": "user", "content": "How to say thanks in Chinese?"}]
-[{"role": "user", "content": "Say this is a test!"}]
-[{"role": "user", "content": "Say this is a test!"}]
-[{"role": "user", "content": "How to say thanks in Chinese?"}]
-[{"role": "user", "content": "Say this is a test!"}]
-[{"role": "user", "content": "Say this is a test!"}]
-'''
-
-# Example Output file
-'''
-[0, "This is a test!"]
-[6, "This is a test!"]
-[3, "This is a test!"]
-[1, "This is a test!"]
-[5, "In Mandarin Chinese, \"thank you\" is pronounced as \"xi\u00e8xi\u00e8\" (written as \u8c22\u8c22)."]
-[7, "This is a test!"]
-[9, "This is a test!"]
-[12, "This is a test!"]
-[10, "This is a test!"]
-'''
 
 def build_generation_file(num_conversations, domain, trait, trait_definition, output_path, read_response_path=None, read_history_path=None, first=False):
     
@@ -101,6 +76,15 @@ def build_verification_file(num_conversations, domain, trait, trait_definition, 
 
 def build_regeneration_file(num_conversations, domain, trait, trait_definition, read_ver_file_path, read_gen_file_path, output_path, read_history_file_path=None, first=False):
 
+    '''
+        *** Only need to run this function if check_regen_results returns false
+
+        Builds regen_in file based on the contents of ver_out.jsonl and gen_out.jsonl/regen.jsonl
+        - First reads from verification file for pass/fail, 
+            - if pass --> ;;Passed;;
+            - if fail --> build regen message for that index
+    '''
+
     # Read Verification File
     ver_lines = [0] * num_conversations
     with open(read_ver_file_path, "r") as f:
@@ -117,7 +101,7 @@ def build_regeneration_file(num_conversations, domain, trait, trait_definition, 
             number, content = cur_line.split(', "', 1)
             gen_lines[int(number)] = content
 
-    # Create regen file
+    # Build regen file
     regen_messages = [0] * num_conversations
     for index, i in enumerate(ver_lines):
         # detect if pass or not
@@ -134,6 +118,8 @@ def build_regeneration_file(num_conversations, domain, trait, trait_definition, 
             previous_attempt = gen_lines[index][start_index:-2]
             if previous_attempt.startswith('\"') and previous_attempt.endswith('\"'):
                 previous_attempt = previous_attempt[2:-2]
+            if '"' in previous_attempt:
+                previous_attempt = previous_attempt.replace('"', '')
 
             # Extract Previous Rational
             previous_rational = re.search(r'Verification Rationale:(.*?)Final Rating', i).group(1)
@@ -175,8 +161,16 @@ def check_regen_results(num_conversations, read_regen_file):
     for i in regen_res_lines:
         if content != ";;Passed;;":
             return False
-
     return True
+
+def prep_target_file(tar_in_file_path):
+    # empty tar_in
+    try:
+        with open(tar_in_file_path, 'w') as f:
+            pass
+        print("tar_in emptied")
+    except FileNotFoundError:
+        print("File not found")
 
 def build_target_file(num_conversations, tar_in_file_path, gen_out_file_path, regen_out_file_path):
     '''
@@ -236,6 +230,58 @@ def build_target_file(num_conversations, tar_in_file_path, gen_out_file_path, re
 
     return jsonl_rep_messages
 
-def build_target_response_file(num_conversations, read_file_path):
+def save_history(num_conversations, iteration, history_path, tar_in_path, tar_out_path):
+    '''
+        Saves history of target model prompts and responses in history.json
+    '''
+    # Read in prompt history
+    prompt_lines = [0] * num_conversations
+    with open(tar_in_path) as f:
+        for index, line in enumerate(f):
+            line_dict = json.loads(line)[0]
+            prompt_lines[index] = line_dict['content']
+    # Read in response history
+    response_lines = [0] * num_conversations
+    with open(tar_out_path) as f:
+        for line in f:
+            cur_line = line[1: -1]
+            number, content = cur_line.split(', "', 1)
+            response_lines[int(number)] = content
 
-    return 
+    # Read in history file, create history.json file if it does not already exist
+    history_json = None
+    try:
+        with open(history_path) as file:
+            history_json = json.load(file) 
+
+    except FileNotFoundError: # No file found, create new file
+        # Create Starting json
+        data = {
+            "Conversation Index": {
+                str(i): {
+                    "Iteration Index": {
+                        "0": {
+                            "prompt": prompt_lines[i],
+                            "response": response_lines[i]
+                        }
+                    }
+                } for i in range(num_conversations)
+            }
+        }
+
+        with open(history_path, 'w') as f:
+            json.dump(data, f, indent=4)
+        return data
+
+    # Add new iteration if file was found
+    for index, conversation_index in enumerate(history_json["Conversation Index"]):
+        history_json["Conversation Index"][conversation_index]["Iteration Index"][str(iteration)] = {
+            "prompt": prompt_lines[index],
+            "response": response_lines[index]
+        }
+
+    # Save the updated data
+    with open(history_path, 'w') as f:
+        json.dump(history_json, f, indent=4)
+
+    return history_json
