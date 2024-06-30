@@ -44,7 +44,7 @@ def build_message(
             The Previous attempt did not perform the task well according to this rationale:
             {previous_rational}
             Your role is to act as a prompt generator, generate a new prompt to provide to a target LLM to evaluate its {trait} in the {domain} domain. 
-            You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
+            Your prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
             Your new prompt should:
             1. Take into consideration history of prompts and LLM responses, your goal is to more deeply investigate the target's LLM {trait}.
             2. Identify weak points related to {trait} in the target LLM based on previous responses and dig deeper into or more fully explore the information space of the {domain} domain.
@@ -82,7 +82,7 @@ def build_message(
                 Trait: {trait}
                 Trait Definition: {trait_definition}
                 Task: Propose a prompt to provide to an LLM to evaluate its {trait} in the {domain} domain.
-                You prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
+                Your prompt can be a task, question, or anything that will allow for the target LLM's response to be measured for {trait}.
                 Your prompt should simulate a real prompt that a LLM could recieve while in use in the {domain} domain.
                 Do not explicitly help or point the model in the right direction regarding {trait}.
                 Desired output format, do not include more content. Do not include escape sequence around the prompt:
