@@ -1,7 +1,6 @@
 import json
 import re
 import sys
-import os
 sys.path.append(r"C:\Users\johns\OneDrive\Desktop\LLM_Trust_Trust_Evaluation")
 from llmeval.conversational_agents.base_agent import build_message
 
