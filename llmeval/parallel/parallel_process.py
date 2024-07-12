@@ -24,7 +24,8 @@ def begin_parallel_setup(history_path):
 
     return status
 
-def run_parallel_evaluation(        
+def run_parallel_evaluation(   
+        api_key,     
         num_conversations, 
         num_iterations,
         regen_lim,
@@ -40,6 +41,7 @@ def run_parallel_evaluation(
     ):
     
     first_status = first_parallel_iter(
+        api_key,
         num_conversations, 
         regen_lim,
         regen_thresh,
@@ -56,6 +58,7 @@ def run_parallel_evaluation(
         print("First Iteration Complete")
 
     second_status = parallel_iter(
+        api_key,
         num_conversations, 
         num_iterations,
         regen_lim,
@@ -75,6 +78,7 @@ def run_parallel_evaluation(
     return status
 
 def first_parallel_iter(
+        api_key,
         num_conversations, 
         regen_lim,
         regen_thresh,
@@ -91,7 +95,7 @@ def first_parallel_iter(
     # Build and run first generation of prompts
     print("Building and Running Initial Generation\n")
     build_generation_file(num_conversations, domain, trait, trait_definition, gen_in_path, first=True)
-    subprocess.run(['python', script_path, gen_in_path, gen_out_path], capture_output=True, text=True)
+    subprocess.run(['python', script_path, gen_in_path, gen_out_path, '--api_key', api_key], capture_output=True, text=True)
 
     print("Building Initial Target In\n")
     # Build the tar_in file, should skip regen_contents as the tar_in file starts out empty, essentially copying contents of gen_out
@@ -101,7 +105,7 @@ def first_parallel_iter(
     print("Building and Running Initial Verification\n")
     # Build and run first verification of prompts, reading from target_file
     build_verification_file(num_conversations, domain, trait, trait_definition, tar_in_path, ver_in_path, first=True)
-    subprocess.run(['python', script_path, ver_in_path, ver_out_path], capture_output=True, text=True)
+    subprocess.run(['python', script_path, ver_in_path, ver_out_path, '--api_key', api_key], capture_output=True, text=True)
 
     print("Verification complete\n")
 
@@ -118,7 +122,7 @@ def first_parallel_iter(
         # Regen based on contents of target_in
         print("Building and Running Regeneration of Failed Prompts\n")
         build_regeneration_file(num_conversations, domain, trait, trait_definition, ver_out_path, tar_in_path, regen_in_path, regen_thresh=regen_thresh, first=True)
-        subprocess.run(['python', script_path, regen_in_path, regen_out_path], capture_output=True, text=True)
+        subprocess.run(['python', script_path, regen_in_path, regen_out_path, '--api_key', api_key], capture_output=True, text=True)
 
         # Updates the contents of target_in
         print("Updating Target In File")
@@ -127,14 +131,14 @@ def first_parallel_iter(
         # verify
         print("Re-Verifying Target In File\n")  
         build_verification_file(num_conversations, domain, trait, trait_definition, tar_in_path, ver_in_path, first=True)
-        subprocess.run(['python', script_path, ver_in_path, ver_out_path], capture_output=True, text=True) 
+        subprocess.run(['python', script_path, ver_in_path, ver_out_path, '--api_key', api_key], capture_output=True, text=True) 
 
         counter += 1
     print("\nFinished Regeneration Process\n")
 
     # Run tar_in file
     print("Running Target Model prompts\n")
-    subprocess.run(['python', script_path, tar_in_path, tar_out_path], capture_output=True, text=True)
+    subprocess.run(['python', script_path, tar_in_path, tar_out_path, '--api_key', api_key], capture_output=True, text=True)
 
     # Save history
     print("Save History\n")
@@ -145,6 +149,7 @@ def first_parallel_iter(
     return True
 
 def parallel_iter(
+        api_key,
         num_conversations, 
         num_iterations,
         regen_lim,
@@ -163,7 +168,7 @@ def parallel_iter(
         # Build and run first generation of prompts
         print(f"Building and Running {i}th Generation\n")
         build_generation_file(num_conversations, domain, trait, trait_definition, gen_in_path, history_path=history_path, first=False)
-        subprocess.run(['python', script_path, gen_in_path, gen_out_path], capture_output=True, text=True)
+        subprocess.run(['python', script_path, gen_in_path, gen_out_path, '--api_key', api_key], capture_output=True, text=True)
 
         print(f"Building {i}th Target In\n")
         # Build the tar_in file, should skip regen_contents as the tar_in file starts out empty, essentially copying contents of gen_out
@@ -173,7 +178,7 @@ def parallel_iter(
         print(f"Building and Running {i}th Verification\n")
         # Build and run first verification of prompts, reading from target_file
         build_verification_file(num_conversations, domain, trait, trait_definition, tar_in_path, ver_in_path, history_path=history_path, first=False)
-        subprocess.run(['python', script_path, ver_in_path, ver_out_path], capture_output=True, text=True)
+        subprocess.run(['python', script_path, ver_in_path, ver_out_path, '--api_key', api_key], capture_output=True, text=True)
 
         print("Verification complete\n")
 
@@ -190,7 +195,7 @@ def parallel_iter(
             # Regen based on contents of target_in
             print("Building and Running Regeneration of Failed Prompts\n")
             build_regeneration_file(num_conversations, domain, trait, trait_definition, ver_out_path, tar_in_path, regen_in_path, regen_thresh=regen_thresh, history_path=history_path, first=False)
-            subprocess.run(['python', script_path, regen_in_path, regen_out_path], capture_output=True, text=True)
+            subprocess.run(['python', script_path, regen_in_path, regen_out_path, '--api_key', api_key], capture_output=True, text=True)
 
             # Updates the contents of target_in
             print("Updating Target In File")
@@ -199,14 +204,14 @@ def parallel_iter(
             # verify
             print("Re-Verifying Target In File\n")  
             build_verification_file(num_conversations, domain, trait, trait_definition, tar_in_path, ver_in_path, history_path=history_path, first=False)
-            subprocess.run(['python', script_path, ver_in_path, ver_out_path], capture_output=True, text=True) 
+            subprocess.run(['python', script_path, ver_in_path, ver_out_path, '--api_key', api_key], capture_output=True, text=True) 
 
             counter += 1
         print("\nFinished Regeneration Process\n")
 
         # Run tar_in file
         print("Running Target Model prompts\n")
-        subprocess.run(['python', script_path, tar_in_path, tar_out_path], capture_output=True, text=True)
+        subprocess.run(['python', script_path, tar_in_path, tar_out_path, '--api_key', api_key], capture_output=True, text=True)
 
         # Save history
         print("Save History\n")

@@ -425,7 +425,7 @@ def task_id_generator_function():
 @click.argument("input_filepath", type=str)
 @click.argument("output_filepath", type=str, default=r"C:\Users\johns\OneDrive\Desktop\LLM_Trust_Trust_Evaluation\llmeval\parallel\output_start.jsonl", required=False)
 @click.option("--base_url", type=str, default="https://drchat.xyz")
-@click.option("--api_key", type=str, default="sk-7AKI_8FfvamSDIDpRBfxsg")
+@click.option("--api_key", type=str, default=None)
 @click.option("--model", type=str, default="gpt4-1106-preview")
 @click.option("--max_requests_per_minute", type=int, default=720 * 0.5)
 @click.option("--max_tokens_per_minute", type=int, default=300_000 * 0.5)
