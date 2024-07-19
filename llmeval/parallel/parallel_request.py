@@ -1,3 +1,6 @@
+'''
+    Special Thanks to Dr. ZhiYuan Peng for providing this parallelization implementation (based on openai reference)
+'''
 import aiohttp  # for making API calls concurrently
 import argparse  # for running script from command line
 import asyncio  # for running API calls concurrently
